@@ -1,4 +1,7 @@
+import { tr } from "zod/v4/locales";
 import { postRouter } from "~/server/api/routers/post";
+import { transactionRouter } from "~/server/api/routers/transaction";
+
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -8,6 +11,7 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   post: postRouter,
+  transaction: transactionRouter,
 });
 
 // export type definition of API
