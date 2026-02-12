@@ -4,24 +4,29 @@ import { GuestView } from "./_components/GuestView";
 import { DashboardView } from "./_components/DashboardView";
 
 export default async function Home() {
-  // 1. Zjistíme na serveru, jestli je uživatel přihlášený
-  const session = await auth();
+    const session = await auth();
 
-  // 2. Pokud NENÍ přihlášený -> Vrátíme Guest Page
-  if (!session?.user) {
-    return <GuestView />;
-  }
+    if (!session?.user) {
+        return <GuestView />;
+    }
 
-  // 3. Pokud JE přihlášený -> Načteme data a vrátíme Dashboard
-  // Díky tomu, že jsme uvnitř "if session", víme, že protectedProcedure projde
-  const transactions = await api.transaction.getAll();
+    // 1. Fetch the raw data (contains "Decimal" objects)
+    const rawTransactions = await api.transaction.getAll();
 
-  return (
-    <HydrateClient>
-      <DashboardView 
-        transactions={transactions} 
-        userName={session.user.name} 
-      />
-    </HydrateClient>
-  );
+    // 2. Convert "Decimal" to simple "numbers"
+    const transactions = rawTransactions.map((t) => ({
+        ...t,
+        quantity: t.quantity.toNumber(), // Convert Quantity
+        pricePerUnit: t.pricePerUnit.toNumber(), // Convert Price
+        fees: t.fees ? t.fees.toNumber() : 0, // Convert Fees (handle null)
+    }));
+
+    return (
+        <HydrateClient>
+            <DashboardView
+                transactions={transactions}
+                userName={session.user.name}
+            />
+        </HydrateClient>
+    );
 }
