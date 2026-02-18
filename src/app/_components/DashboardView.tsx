@@ -9,8 +9,8 @@ type Transaction = {
     date: Date;
     type: "BUY" | "SELL";
     assetSymbol: string;
-    quantity: { toString: () => string } | number;
-    pricePerUnit: { toString: () => string } | number;
+    quantity: number;
+    pricePerUnit: number;
 };
 
 export function DashboardView({
@@ -138,7 +138,7 @@ export function DashboardView({
                                                 {t.assetSymbol}
                                             </td>
                                             <td className="px-6 py-4 text-right font-mono">
-                                                {Number(t.quantity)}
+                                                {t.quantity}
                                             </td>
                                             <td className="px-6 py-4 text-right font-mono">
                                                 {Number(
