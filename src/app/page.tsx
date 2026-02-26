@@ -1,32 +1,17 @@
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
-import { GuestView } from "./_components/GuestView";
-import { DashboardView } from "./_components/DashboardView";
+import { redirect } from "next/navigation";
+// Přidáme import tvé komponenty
+import { GuestView } from "~/app/_components/GuestView";
 
-export default async function Home() {
-    const session = await auth();
+export default async function HomePage() {
+  // Zjistíme, jestli je uživatel přihlášený
+  const session = await auth();
 
-    if (!session?.user) {
-        return <GuestView />;
-    }
+  // Pokud ANO, přesměrujeme ho rovnou na jeho Dashboard
+  if (session) {
+    redirect("/dashboard");
+  }
 
-    // 1. Fetch the raw data (contains "Decimal" objects)
-    const rawTransactions = await api.transaction.getAll();
-
-    // 2. Convert "Decimal" to simple "numbers"
-    const transactions = rawTransactions.map((t) => ({
-        ...t,
-        quantity: t.quantity.toNumber(), // Convert Quantity
-        pricePerUnit: t.pricePerUnit.toNumber(), // Convert Price
-        fees: t.fees ? t.fees.toNumber() : 0, // Convert Fees (handle null)
-    }));
-
-    return (
-        <HydrateClient>
-            <DashboardView
-                transactions={transactions}
-                userName={session.user.name}
-            />
-        </HydrateClient>
-    );
+  // Pokud NE, vyrenderujeme tvou externí komponentu
+  return <GuestView />;
 }

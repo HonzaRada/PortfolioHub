@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import toast from "react-hot-toast";
@@ -7,186 +8,206 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-type Props = {
-    isOpen: boolean;
-    onClose: () => void;
+type TransactionData = {
+  id: string;
+  date: Date;
+  type: "BUY" | "SELL";
+  assetSymbol: string;
+  quantity: number;
+  pricePerUnit: number;
 };
 
-// 1. Validace formuláře s rozlišením chyb
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  portfolioId: string;
+  initialData?: TransactionData | null;
+};
+
+// 1. Zod schéma s našimi vlastními chybovými hláškami
 const formSchema = z.object({
-    assetSymbol: z.string().min(1, "Prosím vyplňte Ticker (např. AAPL)"),
-    quantity: z.coerce
-        .number()
-        .refine((val) => val >= 0, { message: "Množství nesmí být záporné" })
-        .refine((val) => val > 0, { message: "Prosím vyplňte množství" }),
-    pricePerUnit: z.coerce
-        .number()
-        .refine((val) => val >= 0, { message: "Cena nesmí být záporná" })
-        .refine((val) => val > 0, { message: "Prosím vyplňte cenu" }),
-    type: z.enum(["BUY", "SELL"]),
+  type: z.enum(["BUY", "SELL"]),
+  assetSymbol: z.string().min(1, "Zadejte symbol aktiva (např. AAPL, BTC)"),
+  // z.coerce automaticky převede text z inputu na číslo
+  quantity: z.coerce
+    .number({ invalid_type_error: "Zadejte platné číslo" })
+    .positive("Množství musí být větší než 0"),
+  pricePerUnit: z.coerce
+    .number({ invalid_type_error: "Zadejte platné číslo" })
+    .positive("Cena musí být větší než 0"),
+  date: z.string().min(1, "Vyberte datum transakce"),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-export function CreateTransactionModal({ isOpen, onClose }: Props) {
-    const router = useRouter();
+export function CreateTransactionModal({ isOpen, onClose, portfolioId, initialData }: Props) {
+  const router = useRouter();
+  const utils = api.useUtils();
 
-    const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { isSubmitting },
-    } = useForm<FormData>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            type: "BUY",
-            assetSymbol: "",
-            quantity: undefined,
-            pricePerUnit: undefined,
-        },
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting, errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+  });
 
-    const createTransaction = api.transaction.create.useMutation({
-        onSuccess: () => {
-            router.refresh();
-            onClose();
-            reset();
-            toast.success("Transakce uložena! 🚀");
-        },
-        // 2. ÚPRAVA ZPRACOVÁNÍ CHYB ZE SERVERU
-        // Pokud by náhodou nějaká chyba prošla až na server, tady ji "učesáme"
-        onError: (error) => {
-            const zodErrorMessages = error.data?.zodError?.fieldErrors;
-            if (zodErrorMessages) {
-                // Pokud je to chyba validace ze serveru, vezmeme první zprávu
-                const firstMessage = Object.values(zodErrorMessages)[0]?.[0];
-                toast.error(firstMessage || "Chyba validace dat");
-            } else {
-                // Jinak zobrazíme obecnou zprávu (ošetříme ten ošklivý JSON)
-                toast.error(error.message || "Něco se pokazilo");
-            }
-        },
-    });
-
-    const onSubmit = (data: FormData) => {
-        createTransaction.mutate({
-            ...data,
-            date: new Date(),
+  // 2. Předvyplnění a čištění formuláře (včetně chyb)
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        reset({
+          type: initialData.type,
+          assetSymbol: initialData.assetSymbol,
+          quantity: initialData.quantity,
+          pricePerUnit: initialData.pricePerUnit,
+          // Převedeme Date objekt na formát YYYY-MM-DD pro input type="date"
+          date: new Date(initialData.date).toISOString().split("T")[0],
         });
+      } else {
+        reset({
+          type: "BUY",
+          assetSymbol: "",
+          quantity: undefined as unknown as number, // Trik pro prázdné políčko místo nuly
+          pricePerUnit: undefined as unknown as number,
+          date: new Date().toISOString().split("T")[0], // Dnešní datum
+        });
+      }
+    } else {
+      reset(); // Vyčistí vše po zavření
+    }
+  }, [isOpen, initialData, reset]);
+
+  const createTransaction = api.transaction.create.useMutation({
+    onSuccess: () => {
+      utils.transaction.getAll.invalidate();
+      router.refresh();
+      onClose();
+      toast.success("Transakce přidána!");
+    },
+    onError: (error) => toast.error("Chyba serveru: " + error.message),
+  });
+
+  const updateTransaction = api.transaction.update.useMutation({
+    onSuccess: () => {
+      utils.transaction.getAll.invalidate();
+      router.refresh();
+      onClose();
+      toast.success("Transakce upravena! ✏️");
+    },
+    onError: (error) => toast.error("Chyba serveru: " + error.message),
+  });
+
+  const onSubmit = (data: FormData) => {
+    // Backend očekává Date objekt, takže textový datum z inputu převedeme zpět
+    const submissionData = {
+      ...data,
+      date: new Date(data.date),
     };
 
-    const onError = (errors: any) => {
-        const firstErrorKey = Object.keys(errors)[0];
-        if (firstErrorKey) {
-            toast.error(
-                errors[firstErrorKey]?.message || "Zkontrolujte formulář",
-            );
-        }
-    };
+    if (initialData) {
+      updateTransaction.mutate({ id: initialData.id, ...submissionData });
+    } else {
+      createTransaction.mutate({ portfolioId, ...submissionData });
+    }
+  };
 
-    if (!isOpen) return null;
+  if (!isOpen) return null;
 
-    return (
-        <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm duration-200">
-            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-                <h2 className="mb-6 text-xl font-bold text-slate-900">
-                    Nová Transakce
-                </h2>
+  const isPending = createTransaction.isPending || updateTransaction.isPending;
 
-                <form
-                    onSubmit={handleSubmit(onSubmit, onError)}
-                    className="space-y-5"
-                >
-                    <div>
-                        <label className="mb-1 block text-sm font-semibold text-slate-700">
-                            Ticker (např. AAPL)
-                        </label>
-                        <input
-                            {...register("assetSymbol")}
-                            placeholder="AAPL"
-                            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="mb-1 block text-sm font-semibold text-slate-700">
-                                Množství
-                            </label>
-                            <input
-                                type="number"
-                                step="any"
-                                {...register("quantity")}
-                                placeholder="10"
-                                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-sm font-semibold text-slate-700">
-                                Cena za kus
-                            </label>
-                            <input
-                                type="number"
-                                step="any"
-                                {...register("pricePerUnit")}
-                                placeholder="150.50"
-                                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex gap-4 rounded-lg bg-slate-100 p-1">
-                        <label
-                            className={`flex-1 cursor-pointer rounded-md py-2 text-center text-sm font-medium text-slate-500 transition hover:text-slate-700 has-[:checked]:bg-white has-[:checked]:text-green-700 has-[:checked]:shadow-sm`}
-                        >
-                            <input
-                                type="radio"
-                                value="BUY"
-                                {...register("type")}
-                                className="hidden"
-                            />
-                            Nákup
-                        </label>
-
-                        <label
-                            className={`flex-1 cursor-pointer rounded-md py-2 text-center text-sm font-medium text-slate-500 transition hover:text-slate-700 has-[:checked]:bg-white has-[:checked]:text-red-700 has-[:checked]:shadow-sm`}
-                        >
-                            <input
-                                type="radio"
-                                value="SELL"
-                                {...register("type")}
-                                className="hidden"
-                            />
-                            Prodej
-                        </label>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                reset();
-                                onClose();
-                            }}
-                            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
-                        >
-                            Zrušit
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={
-                                isSubmitting || createTransaction.isPending
-                            }
-                            className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:shadow-lg disabled:opacity-50 disabled:shadow-none"
-                        >
-                            {isSubmitting || createTransaction.isPending
-                                ? "Ukládám..."
-                                : "Uložit"}
-                        </button>
-                    </div>
-                </form>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <h2 className="mb-6 text-xl font-bold text-slate-900">
+          {initialData ? "Upravit transakci" : "Nová transakce"}
+        </h2>
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          
+          {/* Typ transakce */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Typ</label>
+              <select
+                {...register("type")}
+                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+              >
+                <option value="BUY">Nákup</option>
+                <option value="SELL">Prodej</option>
+              </select>
             </div>
-        </div>
-    );
+
+            {/* Datum */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Datum</label>
+              <input
+                type="date"
+                {...register("date")}
+                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+              />
+              {errors.date && <p style={{ color: "red" }} className="text-xs mt-1 ml-1">{errors.date.message}</p>}
+            </div>
+          </div>
+
+          {/* Aktivum */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Symbol aktiva</label>
+            <input
+              {...register("assetSymbol")}
+              placeholder="Např. BTC, AAPL, VWCE"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition uppercase"
+            />
+            {errors.assetSymbol && <p style={{ color: "red" }} className="text-xs mt-1 ml-1">{errors.assetSymbol.message}</p>}
+          </div>
+
+          {/* Množství a Cena */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Množství</label>
+              <input
+                type="number"
+                step="any" // Povolí desetinná čísla (např. u krypta)
+                {...register("quantity")}
+                placeholder="0.00"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+              />
+              {errors.quantity && <p style={{ color: "red" }} className="text-xs mt-1 ml-1">{errors.quantity.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Cena za kus (Kč)</label>
+              <input
+                type="number"
+                step="any"
+                {...register("pricePerUnit")}
+                placeholder="0.00"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+              />
+              {errors.pricePerUnit && <p style={{ color: "red" }} className="text-xs mt-1 ml-1">{errors.pricePerUnit.message}</p>}
+            </div>
+          </div>
+
+          {/* Tlačítka */}
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+            >
+              Zrušit
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || isPending}
+              className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-indigo-700 hover:shadow-lg disabled:opacity-50 transition"
+            >
+              {isPending ? "Ukládám..." : "Uložit"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }

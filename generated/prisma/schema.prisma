@@ -15,18 +15,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-
-  @@index([name])
-}
-
 // Necessary for Next auth
 model Account {
   id                       String  @id @default(cuid())
@@ -56,15 +44,14 @@ model Session {
 }
 
 model User {
-  id            String        @id @default(cuid())
+  id            String      @id @default(cuid())
   name          String?
-  email         String?       @unique
+  email         String?     @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
-  posts         Post[]
-  transactions  Transaction[]
+  portfolios    Portfolio[]
 }
 
 model VerificationToken {
@@ -75,23 +62,39 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Transaction {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  assetSymbol  String
-  type         TransactionType
-  quantity     Decimal
-  pricePerUnit Decimal
-  fees         Decimal?        @default(0)
-  currency     String          @default("CZK")
-
-  date      DateTime @default(now())
+model Portfolio {
+  id        String   @id @default(cuid())
+  name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Vztah k uživateli (Majitel portfolia)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Vztah k transakcím (Portfolio obsahuje transakce)
+  transactions Transaction[]
+
   @@index([userId])
+}
+
+// 3. ÚPRAVA MODELU TRANSACTION
+model Transaction {
+  id String @id @default(cuid())
+
+  type         String
+  assetSymbol  String
+  quantity     Float
+  pricePerUnit Float
+  date         DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@index([portfolioId])
 }
 
 enum TransactionType {

@@ -121,14 +121,6 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
-exports.Prisma.PostScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  createdById: 'createdById'
-};
-
 exports.Prisma.AccountScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -166,18 +158,24 @@ exports.Prisma.VerificationTokenScalarFieldEnum = {
   expires: 'expires'
 };
 
+exports.Prisma.PortfolioScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId'
+};
+
 exports.Prisma.TransactionScalarFieldEnum = {
   id: 'id',
-  userId: 'userId',
-  assetSymbol: 'assetSymbol',
   type: 'type',
+  assetSymbol: 'assetSymbol',
   quantity: 'quantity',
   pricePerUnit: 'pricePerUnit',
-  fees: 'fees',
-  currency: 'currency',
   date: 'date',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  portfolioId: 'portfolioId'
 };
 
 exports.Prisma.SortOrder = {
@@ -194,17 +192,14 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-exports.TransactionType = exports.$Enums.TransactionType = {
-  BUY: 'BUY',
-  SELL: 'SELL'
-};
+
 
 exports.Prisma.ModelName = {
-  Post: 'Post',
   Account: 'Account',
   Session: 'Session',
   User: 'User',
   VerificationToken: 'VerificationToken',
+  Portfolio: 'Portfolio',
   Transaction: 'Transaction'
 };
 
