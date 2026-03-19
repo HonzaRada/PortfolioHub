@@ -79,4 +79,53 @@ export const portfolioRouter = createTRPCRouter({
         },
       });
     }),
+
+  // NOVÉ: Stažení živých cen z Finnhub API
+  getPrices: protectedProcedure
+    .input(z.object({ symbols: z.array(z.string()) }))
+    .query(async ({ input }) => {
+      const prices: Record<string, number> = {};
+      const apiKey = process.env.FINNHUB_API_KEY; // Načteme klíč z .env
+
+      // Ochrana: pokud zapomeneme přidat klíč do .env
+      if (!apiKey) {
+        console.error("Chybí FINNHUB_API_KEY v .env souboru!");
+        return prices; 
+      }
+
+      for (const symbol of input.symbols) {
+        try {
+          // Zeptáme se Finnhubu na aktuální cenu (Quote endpoint)
+          const response = await fetch(
+            `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`
+          );
+
+          if (!response.ok) continue;
+
+          const data = await response.json();
+
+          // Finnhub vrací aktuální cenu pod písmenem 'c' (current price)
+          // Pokud symbol neexistuje, 'c' je obvykle 0
+          if (data && data.c > 0) {
+            prices[symbol] = data.c;
+          }
+        } catch (error) {
+          console.log(`Cena nenalezena pro symbol: ${symbol}`);
+        }
+      }
+      return prices;
+    }),
+
+    // NOVÉ: Stažení aktuálních kurzů měn
+    getExchangeRates: protectedProcedure.query(async () => {
+      try {
+        // Stáhneme kurzy vůči USD (1 USD = X CZK, X EUR atd.)
+        const res = await fetch("https://open.er-api.com/v6/latest/USD");
+        const data = await res.json();
+        return data.rates as Record<string, number>;
+      } catch (error) {
+        console.error("Chyba při stahování kurzů");
+        return { USD: 1, CZK: 23.5, EUR: 0.92, GBP: 0.79 }; // Nouzová záloha
+      }
+    }),
 });

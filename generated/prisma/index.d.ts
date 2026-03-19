@@ -6868,6 +6868,7 @@ export namespace Prisma {
     assetSymbol: string | null
     quantity: number | null
     pricePerUnit: number | null
+    currency: string | null
     date: Date | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6880,6 +6881,7 @@ export namespace Prisma {
     assetSymbol: string | null
     quantity: number | null
     pricePerUnit: number | null
+    currency: string | null
     date: Date | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6892,6 +6894,7 @@ export namespace Prisma {
     assetSymbol: number
     quantity: number
     pricePerUnit: number
+    currency: number
     date: number
     createdAt: number
     updatedAt: number
@@ -6916,6 +6919,7 @@ export namespace Prisma {
     assetSymbol?: true
     quantity?: true
     pricePerUnit?: true
+    currency?: true
     date?: true
     createdAt?: true
     updatedAt?: true
@@ -6928,6 +6932,7 @@ export namespace Prisma {
     assetSymbol?: true
     quantity?: true
     pricePerUnit?: true
+    currency?: true
     date?: true
     createdAt?: true
     updatedAt?: true
@@ -6940,6 +6945,7 @@ export namespace Prisma {
     assetSymbol?: true
     quantity?: true
     pricePerUnit?: true
+    currency?: true
     date?: true
     createdAt?: true
     updatedAt?: true
@@ -7039,6 +7045,7 @@ export namespace Prisma {
     assetSymbol: string
     quantity: number
     pricePerUnit: number
+    currency: string | null
     date: Date
     createdAt: Date
     updatedAt: Date
@@ -7070,6 +7077,7 @@ export namespace Prisma {
     assetSymbol?: boolean
     quantity?: boolean
     pricePerUnit?: boolean
+    currency?: boolean
     date?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7083,6 +7091,7 @@ export namespace Prisma {
     assetSymbol?: boolean
     quantity?: boolean
     pricePerUnit?: boolean
+    currency?: boolean
     date?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7096,6 +7105,7 @@ export namespace Prisma {
     assetSymbol?: boolean
     quantity?: boolean
     pricePerUnit?: boolean
+    currency?: boolean
     date?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7109,13 +7119,14 @@ export namespace Prisma {
     assetSymbol?: boolean
     quantity?: boolean
     pricePerUnit?: boolean
+    currency?: boolean
     date?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     portfolioId?: boolean
   }
 
-  export type TransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "assetSymbol" | "quantity" | "pricePerUnit" | "date" | "createdAt" | "updatedAt" | "portfolioId", ExtArgs["result"]["transaction"]>
+  export type TransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "assetSymbol" | "quantity" | "pricePerUnit" | "currency" | "date" | "createdAt" | "updatedAt" | "portfolioId", ExtArgs["result"]["transaction"]>
   export type TransactionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     portfolio?: boolean | PortfolioDefaultArgs<ExtArgs>
   }
@@ -7137,6 +7148,7 @@ export namespace Prisma {
       assetSymbol: string
       quantity: number
       pricePerUnit: number
+      currency: string | null
       date: Date
       createdAt: Date
       updatedAt: Date
@@ -7570,6 +7582,7 @@ export namespace Prisma {
     readonly assetSymbol: FieldRef<"Transaction", 'String'>
     readonly quantity: FieldRef<"Transaction", 'Float'>
     readonly pricePerUnit: FieldRef<"Transaction", 'Float'>
+    readonly currency: FieldRef<"Transaction", 'String'>
     readonly date: FieldRef<"Transaction", 'DateTime'>
     readonly createdAt: FieldRef<"Transaction", 'DateTime'>
     readonly updatedAt: FieldRef<"Transaction", 'DateTime'>
@@ -8068,6 +8081,7 @@ export namespace Prisma {
     assetSymbol: 'assetSymbol',
     quantity: 'quantity',
     pricePerUnit: 'pricePerUnit',
+    currency: 'currency',
     date: 'date',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
@@ -8484,6 +8498,7 @@ export namespace Prisma {
     assetSymbol?: StringFilter<"Transaction"> | string
     quantity?: FloatFilter<"Transaction"> | number
     pricePerUnit?: FloatFilter<"Transaction"> | number
+    currency?: StringNullableFilter<"Transaction"> | string | null
     date?: DateTimeFilter<"Transaction"> | Date | string
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
     updatedAt?: DateTimeFilter<"Transaction"> | Date | string
@@ -8497,6 +8512,7 @@ export namespace Prisma {
     assetSymbol?: SortOrder
     quantity?: SortOrder
     pricePerUnit?: SortOrder
+    currency?: SortOrderInput | SortOrder
     date?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -8513,6 +8529,7 @@ export namespace Prisma {
     assetSymbol?: StringFilter<"Transaction"> | string
     quantity?: FloatFilter<"Transaction"> | number
     pricePerUnit?: FloatFilter<"Transaction"> | number
+    currency?: StringNullableFilter<"Transaction"> | string | null
     date?: DateTimeFilter<"Transaction"> | Date | string
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
     updatedAt?: DateTimeFilter<"Transaction"> | Date | string
@@ -8526,6 +8543,7 @@ export namespace Prisma {
     assetSymbol?: SortOrder
     quantity?: SortOrder
     pricePerUnit?: SortOrder
+    currency?: SortOrderInput | SortOrder
     date?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -8546,6 +8564,7 @@ export namespace Prisma {
     assetSymbol?: StringWithAggregatesFilter<"Transaction"> | string
     quantity?: FloatWithAggregatesFilter<"Transaction"> | number
     pricePerUnit?: FloatWithAggregatesFilter<"Transaction"> | number
+    currency?: StringNullableWithAggregatesFilter<"Transaction"> | string | null
     date?: DateTimeWithAggregatesFilter<"Transaction"> | Date | string
     createdAt?: DateTimeWithAggregatesFilter<"Transaction"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Transaction"> | Date | string
@@ -8886,6 +8905,7 @@ export namespace Prisma {
     assetSymbol: string
     quantity: number
     pricePerUnit: number
+    currency?: string | null
     date: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8898,6 +8918,7 @@ export namespace Prisma {
     assetSymbol: string
     quantity: number
     pricePerUnit: number
+    currency?: string | null
     date: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8910,6 +8931,7 @@ export namespace Prisma {
     assetSymbol?: StringFieldUpdateOperationsInput | string
     quantity?: FloatFieldUpdateOperationsInput | number
     pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8922,6 +8944,7 @@ export namespace Prisma {
     assetSymbol?: StringFieldUpdateOperationsInput | string
     quantity?: FloatFieldUpdateOperationsInput | number
     pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8934,6 +8957,7 @@ export namespace Prisma {
     assetSymbol: string
     quantity: number
     pricePerUnit: number
+    currency?: string | null
     date: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8946,6 +8970,7 @@ export namespace Prisma {
     assetSymbol?: StringFieldUpdateOperationsInput | string
     quantity?: FloatFieldUpdateOperationsInput | number
     pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8957,6 +8982,7 @@ export namespace Prisma {
     assetSymbol?: StringFieldUpdateOperationsInput | string
     quantity?: FloatFieldUpdateOperationsInput | number
     pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9333,6 +9359,7 @@ export namespace Prisma {
     assetSymbol?: SortOrder
     quantity?: SortOrder
     pricePerUnit?: SortOrder
+    currency?: SortOrder
     date?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -9350,6 +9377,7 @@ export namespace Prisma {
     assetSymbol?: SortOrder
     quantity?: SortOrder
     pricePerUnit?: SortOrder
+    currency?: SortOrder
     date?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -9362,6 +9390,7 @@ export namespace Prisma {
     assetSymbol?: SortOrder
     quantity?: SortOrder
     pricePerUnit?: SortOrder
+    currency?: SortOrder
     date?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -10152,6 +10181,7 @@ export namespace Prisma {
     assetSymbol: string
     quantity: number
     pricePerUnit: number
+    currency?: string | null
     date: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -10163,6 +10193,7 @@ export namespace Prisma {
     assetSymbol: string
     quantity: number
     pricePerUnit: number
+    currency?: string | null
     date: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -10234,6 +10265,7 @@ export namespace Prisma {
     assetSymbol?: StringFilter<"Transaction"> | string
     quantity?: FloatFilter<"Transaction"> | number
     pricePerUnit?: FloatFilter<"Transaction"> | number
+    currency?: StringNullableFilter<"Transaction"> | string | null
     date?: DateTimeFilter<"Transaction"> | Date | string
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
     updatedAt?: DateTimeFilter<"Transaction"> | Date | string
@@ -10408,6 +10440,7 @@ export namespace Prisma {
     assetSymbol: string
     quantity: number
     pricePerUnit: number
+    currency?: string | null
     date: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -10419,6 +10452,7 @@ export namespace Prisma {
     assetSymbol?: StringFieldUpdateOperationsInput | string
     quantity?: FloatFieldUpdateOperationsInput | number
     pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10430,6 +10464,7 @@ export namespace Prisma {
     assetSymbol?: StringFieldUpdateOperationsInput | string
     quantity?: FloatFieldUpdateOperationsInput | number
     pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10441,6 +10476,7 @@ export namespace Prisma {
     assetSymbol?: StringFieldUpdateOperationsInput | string
     quantity?: FloatFieldUpdateOperationsInput | number
     pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

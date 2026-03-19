@@ -86,6 +86,7 @@ model Transaction {
   assetSymbol  String
   quantity     Float
   pricePerUnit Float
+  currency     String?  @default("USD")
   date         DateTime
 
   createdAt DateTime @default(now())

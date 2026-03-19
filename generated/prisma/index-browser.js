@@ -172,6 +172,7 @@ exports.Prisma.TransactionScalarFieldEnum = {
   assetSymbol: 'assetSymbol',
   quantity: 'quantity',
   pricePerUnit: 'pricePerUnit',
+  currency: 'currency',
   date: 'date',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',

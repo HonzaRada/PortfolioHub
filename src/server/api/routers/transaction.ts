@@ -29,7 +29,7 @@ export const transactionRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        portfolioId: z.string(), // <--- TADY JE TO TVOJE CHYBĚJÍCÍ ID!
+        portfolioId: z.string(),
         assetSymbol: z.string().min(1),
         type: z.enum(["BUY", "SELL"]),
         quantity: z.number().positive(),
@@ -45,6 +45,30 @@ export const transactionRouter = createTRPCRouter({
       
       if (!portfolio) throw new TRPCError({ code: "UNAUTHORIZED" });
 
+      // Pokud jde o PRODEJ, zkontrolujeme, jestli má uživatel dostatek aktiva
+      if (input.type === "SELL") {
+        // Najdeme všechny dosavadní transakce pro tento konkrétní symbol v tomto portfoliu
+        const existingTransactions = await ctx.db.transaction.findMany({
+          where: {
+            portfolioId: input.portfolioId,
+            assetSymbol: input.assetSymbol.toUpperCase(),
+          },
+        });
+
+        // Spočítáme aktuální zůstatek (Nákupy přičteme, prodeje odečteme)
+        const currentBalance = existingTransactions.reduce((acc, tx) => {
+          return tx.type === "BUY" ? acc + tx.quantity : acc - tx.quantity;
+        }, 0);
+
+        // Pokud chce prodat víc, než má, vyhodíme chybu!
+        if (input.quantity > currentBalance) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Nedostatek aktiva. Aktuálně vlastníte pouze ${currentBalance} ks ${input.assetSymbol.toUpperCase()}.`,
+          });
+        }
+      }
+
       return ctx.db.transaction.create({
         data: {
           portfolioId: input.portfolioId, // Napojení na správné portfolio
@@ -55,6 +79,49 @@ export const transactionRouter = createTRPCRouter({
           date: input.date,
         },
       });
+    }),
+
+  // 2b. CREATE MNOHO (Hromadné přidávání transakcí, např. z CSV importu)
+  createMany: protectedProcedure
+    .input(
+      z.object({
+        portfolioId: z.string(),
+        transactions: z.array(
+          z.object({
+            assetSymbol: z.string().min(1),
+            type: z.enum(["BUY", "SELL"]),
+            quantity: z.number().positive(),
+            pricePerUnit: z.number().positive(),
+            currency: z.string().optional(),
+            date: z.date(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Ověříme, že portfolio existuje a patří uživateli
+      const portfolio = await ctx.db.portfolio.findUnique({
+        where: { id: input.portfolioId, userId: ctx.session.user.id },
+      });
+      if (!portfolio) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+      // 2. Připravíme data pro hromadný zápis (přidáme k nim portfolioId)
+      const dataToInsert = input.transactions.map((tx) => ({
+        portfolioId: input.portfolioId,
+        assetSymbol: tx.assetSymbol.toUpperCase(),
+        type: tx.type,
+        quantity: tx.quantity,
+        pricePerUnit: tx.pricePerUnit,
+        currency: tx.currency,
+        date: tx.date,
+      }));
+
+      // 3. Použijeme createMany z Prismy pro bleskový zápis všech najednou
+      const result = await ctx.db.transaction.createMany({
+        data: dataToInsert,
+      });
+
+      return { success: true, count: result.count };
     }),
 
   // 3. DELETE
@@ -97,6 +164,31 @@ export const transactionRouter = createTRPCRouter({
 
       if (!transaction || transaction.portfolio.userId !== ctx.session.user.id) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      // 2. KONTROLA ZŮSTATKU (Jen pokud měníme transakci na PRODEJ nebo upravujeme existující prodej)
+      if (input.type === "SELL") {
+        // Načteme všechny ostatní transakce pro daný symbol (KROMĚ té, kterou právě upravujeme)
+        const existingTransactions = await ctx.db.transaction.findMany({
+          where: {
+            portfolioId: transaction.portfolioId,
+            assetSymbol: input.assetSymbol.toUpperCase(),
+            id: { not: input.id }, // Vyřadíme aktuální transakci
+          },
+        });
+
+        // Spočítáme zůstatek z ostatních transakcí
+        const currentBalance = existingTransactions.reduce((acc, tx) => {
+          return tx.type === "BUY" ? acc + tx.quantity : acc - tx.quantity;
+        }, 0);
+
+        // Pokud nová hodnota prodeje přesahuje dostupný zůstatek, vyhodíme chybu
+        if (input.quantity > currentBalance) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Nedostatek aktiva. Po této úpravě by zůstatek klesl pod nulu (máte k dispozici: ${currentBalance} ks ${input.assetSymbol.toUpperCase()}).`,
+          });
+        }
       }
 
       return ctx.db.transaction.update({
