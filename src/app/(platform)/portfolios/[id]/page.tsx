@@ -125,7 +125,7 @@ export default function PortfolioDetailPage() {
 
                         const rawType = String(row["Buy/Sell"] || "").toUpperCase();
                         const type = rawType.includes("BUY") ? "BUY" : (rawType.includes("SELL") ? "SELL" : null);
-                        const assetSymbol = String(row["Symbol"] || "").trim();
+                        const assetSymbol = String(row["UnderlyingSymbol"] || "").trim();
                         
                         // NOVÉ: Vytažení měny z CSV
                         const currency = String(row["CurrencyPrimary"] || row["Currency"] || "USD").trim().toUpperCase();
