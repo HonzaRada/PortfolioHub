@@ -2,6 +2,19 @@
 
 import Papa from "papaparse";
 import { useState, useMemo, useRef } from "react";
+import {
+    PieChart,
+    Pie,
+    Cell,
+    Legend,
+    ResponsiveContainer,
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip as RechartsTooltip,
+} from "recharts";
 import { api } from "~/trpc/react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -57,6 +70,18 @@ export default function PortfolioDetailPage() {
         { enabled: holdings.length > 0, refetchInterval: 60000 }
     );
 
+    // 2.5 NOVÉ: Stáhneme holdings se statistikami
+    const { data: holdingsWithStats } = api.portfolio.getHoldingsWithStats.useQuery(
+        { portfolioId },
+        { enabled: !!portfolioId }
+    );
+
+    // NOVÉ: Stáhneme historii hodnoty portfolia
+    const { data: portfolioHistory, isLoading: isHistoryLoading } = api.portfolio.getPortfolioHistory.useQuery(
+        { portfolioId },
+        { enabled: !!portfolioId }
+    );
+
     // 3. Stáhneme živé měnové kurzy
     const { data: exchangeRates } = api.portfolio.getExchangeRates.useQuery(undefined, {
         staleTime: 1000 * 60 * 60, // Stačí obnovovat jednou za hodinu
@@ -79,6 +104,64 @@ export default function PortfolioDetailPage() {
             return sum + (h.quantity * priceInDisplayCurrency);
         }, 0);
     }, [holdings, livePrices, exchangeRates, displayCurrency]);
+
+    // NOVÝ: Výpočet statistik portfolia (investováno, P&L)
+    const portfolioStats = useMemo(() => {
+        if (!holdingsWithStats || !exchangeRates) {
+            return { totalInvested: 0, totalPnL: 0, totalPnLPercent: 0 };
+        }
+
+        let totalInvestedUsd = 0;
+
+        holdingsWithStats.forEach((h) => {
+            const assetCurrency = h.currency || "USD";
+            const rateAssetToUsd = exchangeRates[assetCurrency] || 1;
+            const investedInUsd = h.totalInvested / rateAssetToUsd;
+            totalInvestedUsd += investedInUsd;
+        });
+
+        // Převod z USD do vybrané měny
+        const rateUsdToDisplay = exchangeRates[displayCurrency] || 1;
+        const totalInvested = totalInvestedUsd * rateUsdToDisplay;
+        const totalPnL = totalValue - totalInvested;
+        const totalPnLPercent = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
+
+        return { totalInvested, totalPnL, totalPnLPercent };
+    }, [holdingsWithStats, livePrices, exchangeRates, displayCurrency, totalValue]);
+
+    // NOVÝ: Výpočet dat pro koláčový graf alokace
+    const allocationData = useMemo(() => {
+        if (!livePrices || !exchangeRates) return [];
+
+        const data = holdings
+            .map((h) => {
+                const rawPrice = livePrices[h.symbol] || 0;
+                const assetCurrency = h.currency || "USD";
+
+                const rateAssetToUsd = exchangeRates[assetCurrency] || 1;
+                const rateUsdToDisplay = exchangeRates[displayCurrency] || 1;
+
+                const priceInDisplayCurrency = (rawPrice / rateAssetToUsd) * rateUsdToDisplay;
+                const value = h.quantity * priceInDisplayCurrency;
+
+                return { name: h.symbol, value };
+            })
+            .filter((item) => item.value > 0);
+
+        return data;
+    }, [holdings, livePrices, exchangeRates, displayCurrency]);
+
+    const colors = ["#6366f1", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#14b8a6"];
+
+    // NOVÝ: Výpočet dat pro graf vývoje hodnoty portfolia
+    const chartData = useMemo(() => {
+        if (!portfolioHistory || !exchangeRates) return [];
+
+        return portfolioHistory.map((point) => ({
+            date: point.date,
+            value: point.value * (exchangeRates[displayCurrency] || 1),
+        }));
+    }, [portfolioHistory, exchangeRates, displayCurrency]);
 
     // --- MUTACE A OSTATNÍ LOGIKA ---
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -175,36 +258,72 @@ export default function PortfolioDetailPage() {
                 </div>
             </div>
 
-            {/* --- FIALOVÁ KARTA S PŘEPÍNAČEM MĚN --- */}
-            {holdings.length > 0 && (
-                <div className="mb-8 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-8 text-white shadow-lg flex flex-col sm:flex-row sm:items-center justify-between">
+            {/* --- PŘEPÍNAČ MĚN A STAT KARTY --- */}
+            <div className="mb-8">
+                <div className="flex justify-end mb-4">
                     <div>
-                        <p className="text-indigo-100 text-sm font-medium mb-1">Aktuální hodnota portfolia</p>
-                        <div className="flex items-end gap-3">
-                            <h2 className="text-4xl font-bold tracking-tight">
-                                {totalValue.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
-                            </h2>
-                            <span className="text-xl font-medium text-indigo-200 mb-1">{displayCurrency}</span>
-                        </div>
-                        {isPricesLoading && <p className="text-indigo-200 text-xs mt-2 animate-pulse">Aktualizuji data z burzy...</p>}
-                    </div>
-                    
-                    {/* SELECT PRO VÝBĚR MĚNY */}
-                    <div className="mt-4 sm:mt-0">
-                        <label className="text-xs font-medium text-indigo-200 mr-2 uppercase tracking-wider">Zobrazit v:</label>
+                        <label className="text-xs font-medium text-slate-600 mr-2 uppercase tracking-wider">Zobrazit v:</label>
                         <select
                             value={displayCurrency}
                             onChange={(e) => setDisplayCurrency(e.target.value as any)}
-                            className="rounded-lg border-none bg-white/20 px-4 py-2 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-white/50 cursor-pointer appearance-none"
+                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                         >
-                            <option value="CZK" className="text-slate-900">🇨🇿 CZK</option>
-                            <option value="USD" className="text-slate-900">🇺🇸 USD</option>
-                            <option value="EUR" className="text-slate-900">🇪🇺 EUR</option>
-                            <option value="GBP" className="text-slate-900">🇬🇧 GBP</option>
+                            <option value="CZK">🇨🇿 CZK</option>
+                            <option value="USD">🇺🇸 USD</option>
+                            <option value="EUR">🇪🇺 EUR</option>
+                            <option value="GBP">🇬🇧 GBP</option>
                         </select>
                     </div>
                 </div>
-            )}
+
+                {holdings.length > 0 && (
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                        {/* Aktuální hodnota */}
+                        <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-lg">
+                            <p className="text-indigo-100 text-xs font-medium uppercase tracking-wider mb-2">Aktuální hodnota</p>
+                            <div className="flex flex-col">
+                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
+                                    {totalValue.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
+                                </h3>
+                                <span className="text-sm font-medium text-indigo-200">{displayCurrency}</span>
+                            </div>
+                            {isPricesLoading && <p className="text-indigo-200 text-[10px] mt-2 animate-pulse">Aktualizuji...</p>}
+                        </div>
+
+                        {/* Investováno */}
+                        <div className="rounded-2xl bg-slate-100 p-6 text-slate-900 shadow-sm">
+                            <p className="text-slate-600 text-xs font-medium uppercase tracking-wider mb-2">Investováno</p>
+                            <div className="flex flex-col">
+                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
+                                    {portfolioStats.totalInvested.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
+                                </h3>
+                                <span className="text-sm font-medium text-slate-600">{displayCurrency}</span>
+                            </div>
+                        </div>
+
+                        {/* Zisk/Ztráta (Kč) */}
+                        <div className={`rounded-2xl p-6 shadow-lg ${portfolioStats.totalPnL >= 0 ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white" : "bg-gradient-to-br from-red-500 to-rose-600 text-white"}`}>
+                            <p className={`text-xs font-medium uppercase tracking-wider mb-2 ${portfolioStats.totalPnL >= 0 ? "text-green-100" : "text-red-100"}`}>Zisk/Ztráta (Kč)</p>
+                            <div className="flex flex-col">
+                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
+                                    {portfolioStats.totalPnL >= 0 ? "+" : ""}{portfolioStats.totalPnL.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
+                                </h3>
+                                <span className="text-sm font-medium">{displayCurrency}</span>
+                            </div>
+                        </div>
+
+                        {/* Zisk/Ztráta (%) */}
+                        <div className={`rounded-2xl p-6 shadow-lg ${portfolioStats.totalPnLPercent >= 0 ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white" : "bg-gradient-to-br from-red-500 to-rose-600 text-white"}`}>
+                            <p className={`text-xs font-medium uppercase tracking-wider mb-2 ${portfolioStats.totalPnLPercent >= 0 ? "text-green-100" : "text-red-100"}`}>Zisk/Ztráta (%)</p>
+                            <div className="flex flex-col">
+                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
+                                    {portfolioStats.totalPnLPercent >= 0 ? "+" : ""}{portfolioStats.totalPnLPercent.toFixed(2)}%
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* --- ZŮSTATKY --- */}
             <div className="mb-8">
@@ -248,8 +367,92 @@ export default function PortfolioDetailPage() {
                 </div>
             </div>
 
+            {/* --- ALOKACE PORTFOLIA (KOLÁČOVÝ GRAF) --- */}
+            {allocationData.length > 0 && (
+                <div className="mb-8">
+                    <h2 className="mb-4 text-lg font-bold text-slate-900">Alokace portfolia</h2>
+                    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <ResponsiveContainer width="100%" height={350}>
+                            <PieChart>
+                                <Pie
+                                    data={allocationData}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={130}
+                                    innerRadius={70}
+                                >
+                                    {allocationData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                                    ))}
+                                </Pie>
+                                <RechartsTooltip
+                                    formatter={(value: number) =>
+                                        value.toLocaleString("cs-CZ", { maximumFractionDigits: 0 }) + " " + displayCurrency
+                                    }
+                                />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
+            {/* --- VÝVOJ HODNOTY PORTFOLIA (LINEÁRNÍ GRAF) --- */}
+            {chartData && chartData.length > 1 ? (
+                <div className="mb-8">
+                    <h2 className="mb-4 text-lg font-bold text-slate-900">Vývoj hodnoty portfolia</h2>
+                    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        {isHistoryLoading ? (
+                            <div className="h-96 flex items-center justify-center text-slate-400">
+                                Načítám historická data...
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={350}>
+                                <LineChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                    <XAxis
+                                        dataKey="date"
+                                        interval="preserveStartEnd"
+                                        minTickGap={60}
+                                        tick={{ fontSize: 11, fill: "#94a3b8" }}
+                                        tickFormatter={(value) =>
+                                            new Date(value).toLocaleDateString("cs-CZ", { month: "short", year: "2-digit" })
+                                        }
+                                    />
+                                    <YAxis
+                                        tick={{ fontSize: 11, fill: "#94a3b8" }}
+                                        tickFormatter={(value) => {
+                                            if (value < 1000) return value.toString();
+                                            if (value < 1000000) return (value / 1000).toFixed(0) + "k";
+                                            return (value / 1000000).toFixed(0) + "M";
+                                        }}
+                                    />
+                                    <RechartsTooltip
+                                        formatter={(value: number) =>
+                                            value.toLocaleString("cs-CZ", { maximumFractionDigits: 0 }) + " " + displayCurrency
+                                        }
+                                        labelFormatter={(label) =>
+                                            new Date(label).toLocaleDateString("cs-CZ")
+                                        }
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="value"
+                                        stroke="#6366f1"
+                                        strokeWidth={2}
+                                        dot={false}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                </div>
+            ) : null}
+
             {/* Tabulka (Zkráceno pro přehlednost, nech si tam tu svou stávající) */}
-             <h2 className="mb-4 text-lg font-bold text-slate-900">Historie transakcí</h2>
+            <h2 className="mb-4 text-lg font-bold text-slate-900">Historie transakcí</h2>
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-slate-600">
