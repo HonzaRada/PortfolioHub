@@ -121,7 +121,32 @@ export const transactionRouter = createTRPCRouter({
         data: dataToInsert,
       });
 
-      return { success: true, count: result.count };
+      // 4. VALIDACE ZŮSTATKŮ PO IMPORTU
+      const allTransactions = await ctx.db.transaction.findMany({
+        where: {
+          portfolioId: input.portfolioId,
+        },
+      });
+
+      // Spočítáme zůstatek pro každý symbol
+      const balances = new Map<string, number>();
+      allTransactions.forEach((tx) => {
+        const currentBalance = balances.get(tx.assetSymbol) ?? 0;
+        const newBalance = tx.type === "BUY" ? currentBalance + tx.quantity : currentBalance - tx.quantity;
+        balances.set(tx.assetSymbol, newBalance);
+      });
+
+      // Najdeme symboly se záporným zůstatkem
+      const warnings: string[] = [];
+      balances.forEach((balance, symbol) => {
+        if (balance < -0.000001) {
+          warnings.push(
+            `Symbol ${symbol} má záporný zůstatek (${balance.toFixed(4)} ks) — zkontroluj transakce.`
+          );
+        }
+      });
+
+      return { success: true, count: result.count, warnings };
     }),
 
   // 3. DELETE
@@ -202,4 +227,47 @@ export const transactionRouter = createTRPCRouter({
         },
       });
     }),
+
+  // 5. EXPORT — Vrátit všechny transakce všech portfolií uživatele
+  exportAll: protectedProcedure.query(async ({ ctx }) => {
+    // Načteme všechna portfolia uživatele včetně transakcí
+    const portfolios = await ctx.db.portfolio.findMany({
+      where: {
+        userId: ctx.session.user.id,
+      },
+      include: {
+        transactions: true,
+      },
+    });
+
+    // Transformujeme všechny transakce do výsledného formátu
+    const transactions: Array<{
+      portfolioName: string;
+      date: string;
+      type: "BUY" | "SELL";
+      assetSymbol: string;
+      quantity: number;
+      pricePerUnit: number;
+      currency: string | null;
+    }> = [];
+
+    portfolios.forEach((portfolio) => {
+      portfolio.transactions.forEach((tx) => {
+        transactions.push({
+          portfolioName: portfolio.name,
+          date: tx.date.toISOString().split("T")[0], // ISO string (YYYY-MM-DD)
+          type: tx.type,
+          assetSymbol: tx.assetSymbol,
+          quantity: tx.quantity,
+          pricePerUnit: tx.pricePerUnit,
+          currency: tx.currency,
+        });
+      });
+    });
+
+    // Seřadíme podle data vzestupně
+    transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    return transactions;
+  }),
 });

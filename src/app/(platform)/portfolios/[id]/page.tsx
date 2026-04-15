@@ -21,6 +21,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { CreateTransactionModal } from "~/app/_components/CreateTransactionModal";
 import { ConfirmModal } from "~/app/_components/ConfirmModal";
+import { useCurrencyStore } from "~/store/currencyStore";
 
 type TransactionData = {
     id: string;
@@ -39,8 +40,8 @@ export default function PortfolioDetailPage() {
     const utils = api.useUtils();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // --- NOVÝ STAV PRO PŘEPÍNAČ MĚN ---
-    const [displayCurrency, setDisplayCurrency] = useState<"CZK" | "USD" | "EUR" | "GBP">("CZK");
+    // --- GLOBÁLNÍ STAV PRO MĚNU Z ZUSTAND ---
+    const { displayCurrency, setDisplayCurrency } = useCurrencyStore();
 
     const { data: portfolio, isLoading: isPortfolioLoading } = api.portfolio.getById.useQuery({ id: portfolioId });
     const { data: transactions, isLoading: isTransactionsLoading } = api.transaction.getAll.useQuery({ portfolioId });
@@ -180,6 +181,14 @@ export default function PortfolioDetailPage() {
         onSuccess: (data) => {
             utils.transaction.getAll.invalidate();
             toast.success(`Úspěšně naimportováno ${data.count} transakcí! 🎉`);
+            
+            // Zobraz warningy pokud existují
+            if (data.warnings && data.warnings.length > 0) {
+                data.warnings.forEach((warning) => {
+                    toast.error(warning, { duration: 8000 });
+                });
+            }
+            
             if (fileInputRef.current) fileInputRef.current.value = "";
         },
     });
@@ -210,15 +219,36 @@ export default function PortfolioDetailPage() {
                         const type = rawType.includes("BUY") ? "BUY" : (rawType.includes("SELL") ? "SELL" : null);
                         const assetSymbol = String(row["UnderlyingSymbol"] || "").trim();
                         
+                        // FILTR: Přeskoči řádky kde AssetClass není STK
+                        const assetClass = String(row["AssetClass"] || "").trim().toUpperCase();
+                        if (assetClass !== "STK") continue;
+                        
                         // NOVÉ: Vytažení měny z CSV
                         const currency = String(row["CurrencyPrimary"] || row["Currency"] || "USD").trim().toUpperCase();
+
+                        // NOVÉ: Mapování podle ListingExchange na Finnhub formát
+                        const listingExchange = String(row["ListingExchange"] || "").trim().toUpperCase();
+                        const exchangeSuffixMap: Record<string, string> = {
+                          "IBIS": ".BE",
+                          "IBIS2": ".BE",
+                          "XETRA": ".BE",
+                          "GETTEX": ".BE",
+                          "LSE": ".L",
+                          "LSEIOB1": ".L",
+                          "SEHK": ".HK",
+                          "TSX": ".TO",
+                          "TSXV": ".V",
+                          "ASX": ".AX",
+                        };
+                        const suffix = exchangeSuffixMap[listingExchange] || "";
+                        const finnhubSymbol = assetSymbol.replace(" ", ".") + suffix;
 
                         const quantity = Math.abs(Number(String(row["Quantity"] || "0").replace(",", ".")));
                         const pricePerUnit = Math.abs(Number(String(row["Price"] || "0").replace(",", ".")));
 
-                        if (type && assetSymbol && quantity > 0 && pricePerUnit > 0) {
+                        if (type && finnhubSymbol && quantity > 0 && pricePerUnit > 0) {
                             parsedTransactions.push({
-                                date: parsedDate, type, assetSymbol, quantity, pricePerUnit, currency
+                                date: parsedDate, type, assetSymbol: finnhubSymbol, quantity, pricePerUnit, currency
                             });
                         }
                     } catch (e) {}
@@ -482,7 +512,18 @@ export default function PortfolioDetailPage() {
                                     <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">{(t.quantity * t.pricePerUnit).toLocaleString("cs-CZ")}</td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                            <button onClick={() => setEditingTransaction(t as any)} className="text-indigo-600 hover:text-indigo-900">✏️</button>
+                                            <button onClick={() => {
+                                                setEditingTransaction({
+                                                    id: t.id,
+                                                    date: t.date,
+                                                    type: t.type as "BUY" | "SELL",
+                                                    assetSymbol: t.assetSymbol,
+                                                    quantity: t.quantity,
+                                                    pricePerUnit: t.pricePerUnit,
+                                                    currency: t.currency,
+                                                });
+                                                setIsCreateModalOpen(true);
+                                            }} className="text-indigo-600 hover:text-indigo-900">✏️</button>
                                             <button onClick={() => setTransactionToDelete(t.id)} className="text-red-400 hover:text-red-700">🗑️</button>
                                         </div>
                                     </td>

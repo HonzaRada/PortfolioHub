@@ -15,6 +15,7 @@ type TransactionData = {
     assetSymbol: string;
     quantity: number;
     pricePerUnit: number;
+    currency?: string | null;
 };
 
 type Props = {
@@ -34,6 +35,7 @@ const formSchema = z.object({
         .number({ invalid_type_error: "Zadejte platné číslo" })
         .positive("Cena musí být větší než 0"),
     date: z.string().min(1, "Vyberte datum transakce"),
+    currency: z.string().min(1, "Vyberte měnu"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -73,6 +75,14 @@ export function CreateTransactionModal({
             .sort(); // Seřadíme abecedně
     }, [transactions]);
 
+    // NOVÉ: Kombinuj ownedAssets s symbolem z initialData (pokud existuje a není v ownedAssets)
+    const availableAssets = useMemo(() => {
+        if (initialData?.assetSymbol && !ownedAssets.includes(initialData.assetSymbol)) {
+            return [...ownedAssets, initialData.assetSymbol].sort();
+        }
+        return ownedAssets;
+    }, [ownedAssets, initialData]);
+
     const {
         register,
         handleSubmit,
@@ -85,6 +95,7 @@ export function CreateTransactionModal({
         resolver: zodResolver(formSchema),
         defaultValues: {
             type: "BUY",
+            currency: "USD",
         },
     });
 
@@ -95,11 +106,11 @@ export function CreateTransactionModal({
         clearErrors();
         if (currentType === "SELL") {
             const currentSymbol = watch("assetSymbol");
-            if (!ownedAssets.includes(currentSymbol)) {
+            if (!availableAssets.includes(currentSymbol)) {
                 setValue("assetSymbol", "");
             }
         }
-    }, [currentType, ownedAssets, setValue, watch]);
+    }, [currentType, availableAssets, setValue, watch]);
 
     useEffect(() => {
         if (isOpen) {
@@ -112,6 +123,7 @@ export function CreateTransactionModal({
                     date: new Date(initialData.date)
                         .toISOString()
                         .split("T")[0],
+                    currency: initialData.currency ?? "USD",
                 });
             } else {
                 reset({
@@ -120,16 +132,17 @@ export function CreateTransactionModal({
                     quantity: "" as unknown as number,
                     pricePerUnit: "" as unknown as number,
                     date: new Date().toISOString().split("T")[0],
+                    currency: "USD",
                 });
             }
         } else {
             reset({
                 type: "BUY",
                 assetSymbol: "",
-                // To samé i při zavření modálu
                 quantity: "" as unknown as number,
                 pricePerUnit: "" as unknown as number,
                 date: new Date().toISOString().split("T")[0],
+                currency: "USD",
             });
         }
     }, [isOpen, initialData, reset]);
@@ -137,6 +150,7 @@ export function CreateTransactionModal({
     const createTransaction = api.transaction.create.useMutation({
         onSuccess: () => {
             utils.transaction.getAll.invalidate();
+            utils.portfolio.getHoldingsWithStats.invalidate({ portfolioId });
             router.refresh();
             onClose();
             toast.success("Transakce přidána! ✅");
@@ -147,6 +161,7 @@ export function CreateTransactionModal({
     const updateTransaction = api.transaction.update.useMutation({
         onSuccess: () => {
             utils.transaction.getAll.invalidate();
+            utils.portfolio.getHoldingsWithStats.invalidate({ portfolioId });
             router.refresh();
             onClose();
             toast.success("Transakce upravena! ✏️");
@@ -157,6 +172,7 @@ export function CreateTransactionModal({
     const onSubmit = (data: FormData) => {
         const submissionData = {
             ...data,
+            currency: data.currency,
             date: new Date(data.date),
         };
 
@@ -244,7 +260,7 @@ export function CreateTransactionModal({
                                 className="h-10 w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 uppercase transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                             />
                         ) : // PRODEJ: Rozevírací seznam (Select)
-                        ownedAssets.length > 0 ? (
+                        availableAssets.length > 0 ? (
                             <select
                                 {...register("assetSymbol")}
                                 className="h-10 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 uppercase transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
@@ -252,7 +268,7 @@ export function CreateTransactionModal({
                                 <option value="">
                                     -- Vyberte k prodeji --
                                 </option>
-                                {ownedAssets.map((symbol) => (
+                                {availableAssets.map((symbol) => (
                                     <option key={symbol} value={symbol}>
                                         {symbol}
                                     </option>
@@ -269,7 +285,7 @@ export function CreateTransactionModal({
                         </p>
                     </div>
 
-                    {/* Množství a Cena */}
+                    {/* Množství a Cena s měnou */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="mb-1 block text-sm font-semibold text-slate-700">
@@ -286,10 +302,13 @@ export function CreateTransactionModal({
                                 {errors.quantity?.message ?? "\u00A0"}
                             </p>
                         </div>
+                    </div>
 
-                        <div>
+                    {/* Cena a Měna */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-2">
                             <label className="mb-1 block text-sm font-semibold text-slate-700">
-                                Cena za kus (Kč)
+                                Cena za kus
                             </label>
                             <input
                                 type="number"
@@ -300,6 +319,25 @@ export function CreateTransactionModal({
                             />
                             <p className="min-h-4 text-xs mt-1 ml-1 text-red-500">
                                 {errors.pricePerUnit?.message ?? "\u00A0"}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="mb-1 block text-sm font-semibold text-slate-700">
+                                Měna
+                            </label>
+                            <select
+                                {...register("currency")}
+                                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                            >
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="CZK">CZK</option>
+                                <option value="GBP">GBP</option>
+                                <option value="HKD">HKD</option>
+                            </select>
+                            <p className="min-h-4 text-xs mt-1 ml-1 text-red-500">
+                                {errors.currency?.message ?? "\u00A0"}
                             </p>
                         </div>
                     </div>
@@ -319,7 +357,7 @@ export function CreateTransactionModal({
                                 isSubmitting ||
                                 isPending ||
                                 (currentType === "SELL" &&
-                                    ownedAssets.length === 0)
+                                    availableAssets.length === 0)
                             }
                             className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:shadow-lg disabled:opacity-50"
                         >
