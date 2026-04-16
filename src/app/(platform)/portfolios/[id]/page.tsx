@@ -42,6 +42,7 @@ export default function PortfolioDetailPage() {
 
     // --- GLOBÁLNÍ STAV PRO MĚNU Z ZUSTAND ---
     const { displayCurrency, setDisplayCurrency } = useCurrencyStore();
+    const [historyRange, setHistoryRange] = useState<"5D"|"1M"|"3M"|"6M"|"1Y"|"2Y"|"ALL">("1Y");
 
     const { data: portfolio, isLoading: isPortfolioLoading } = api.portfolio.getById.useQuery({ id: portfolioId });
     const { data: transactions, isLoading: isTransactionsLoading } = api.transaction.getAll.useQuery({ portfolioId });
@@ -65,7 +66,7 @@ export default function PortfolioDetailPage() {
             .sort((a, b) => b.quantity - a.quantity);
     }, [transactions]);
 
-    // 2. Stáhneme živé ceny z Finnhubu
+    // 2. Stáhneme živé ceny z Yahoo Finance API
     const { data: livePrices, isLoading: isPricesLoading } = api.portfolio.getPrices.useQuery(
         { symbols: holdings.map(h => h.symbol) },
         { enabled: holdings.length > 0, refetchInterval: 60000 }
@@ -164,6 +165,24 @@ export default function PortfolioDetailPage() {
         }));
     }, [portfolioHistory, exchangeRates, displayCurrency]);
 
+    // Filtrování dat podle vybraného rozsahu
+    const filteredChartData = useMemo(() => {
+        if (!chartData.length) return [];
+        if (historyRange === "ALL") return chartData;
+        
+        const days = { "5D": 5 }[historyRange];
+        if (days !== undefined) {
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - days);
+            return chartData.filter(d => new Date(d.date) >= cutoff);
+        }
+        
+        const months = { "1M": 1, "3M": 3, "6M": 6, "1Y": 12, "2Y": 24 }[historyRange] ?? 12;
+        const cutoff = new Date();
+        cutoff.setMonth(cutoff.getMonth() - months);
+        return chartData.filter(d => new Date(d.date) >= cutoff);
+    }, [chartData, historyRange]);
+
     // --- MUTACE A OSTATNÍ LOGIKA ---
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<TransactionData | null>(null);
@@ -226,29 +245,37 @@ export default function PortfolioDetailPage() {
                         // NOVÉ: Vytažení měny z CSV
                         const currency = String(row["CurrencyPrimary"] || row["Currency"] || "USD").trim().toUpperCase();
 
-                        // NOVÉ: Mapování podle ListingExchange na Finnhub formát
+                        // Mapování podle ListingExchange na Yahoo Finance formát
                         const listingExchange = String(row["ListingExchange"] || "").trim().toUpperCase();
                         const exchangeSuffixMap: Record<string, string> = {
-                          "IBIS": ".BE",
-                          "IBIS2": ".BE",
-                          "XETRA": ".BE",
-                          "GETTEX": ".BE",
+                          "IBIS": ".DE",
+                          "IBIS2": ".DE",
+                          "XETRA": ".DE",
+                          "GETTEX": ".DE",
                           "LSE": ".L",
-                          "LSEIOB1": ".L",
+                          "LSEETF": ".L",
+                          "LSEIOB1": ".IL",
                           "SEHK": ".HK",
                           "TSX": ".TO",
                           "TSXV": ".V",
                           "ASX": ".AX",
+                          "AEB": ".AS",
+                          "SBF": ".PA",
+                          "SIX": ".SW",
+                          "VSE": ".VI",
+                          "TYO": ".T",
+                          "OSL": ".OL",
+                          "PAXOS": "",
                         };
                         const suffix = exchangeSuffixMap[listingExchange] || "";
-                        const finnhubSymbol = assetSymbol.replace(" ", ".") + suffix;
+                        const yahooSymbol = assetSymbol.replace(" ", ".") + suffix;
 
                         const quantity = Math.abs(Number(String(row["Quantity"] || "0").replace(",", ".")));
                         const pricePerUnit = Math.abs(Number(String(row["Price"] || "0").replace(",", ".")));
 
-                        if (type && finnhubSymbol && quantity > 0 && pricePerUnit > 0) {
+                        if (type && yahooSymbol && quantity > 0 && pricePerUnit > 0) {
                             parsedTransactions.push({
-                                date: parsedDate, type, assetSymbol: finnhubSymbol, quantity, pricePerUnit, currency
+                                date: parsedDate, type, assetSymbol: yahooSymbol, quantity, pricePerUnit, currency
                             });
                         }
                     } catch (e) {}
@@ -434,24 +461,67 @@ export default function PortfolioDetailPage() {
                 <div className="mb-8">
                     <h2 className="mb-4 text-lg font-bold text-slate-900">Vývoj hodnoty portfolia</h2>
                     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div className="mb-4 flex justify-center gap-2">
+                            {["5D", "1M", "3M", "6M", "1Y", "2Y", "ALL"].map((range) => (
+                                <button
+                                    key={range}
+                                    onClick={() => setHistoryRange(range as any)}
+                                    className={`px-3 py-1 text-sm font-medium rounded transition ${
+                                        historyRange === range
+                                            ? "bg-indigo-600 text-white"
+                                            : "text-slate-500 hover:text-slate-700"
+                                    }`}
+                                >
+                                    {range}
+                                </button>
+                            ))}
+                        </div>
                         {isHistoryLoading ? (
                             <div className="h-96 flex items-center justify-center text-slate-400">
                                 Načítám historická data...
                             </div>
                         ) : (
                             <ResponsiveContainer width="100%" height={350}>
-                                <LineChart data={chartData}>
+                                <LineChart data={filteredChartData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                                     <XAxis
                                         dataKey="date"
-                                        interval="preserveStartEnd"
-                                        minTickGap={60}
+                                        ticks={(() => {
+                                          if (historyRange === "5D") {
+                                            return filteredChartData.map(d => d.date);
+                                          }
+                                          if (historyRange === "1M") {
+                                            return filteredChartData
+                                              .filter((d, i) => {
+                                                if (i === 0) return true;
+                                                const prev = new Date(filteredChartData[i-1].date);
+                                                const curr = new Date(d.date);
+                                                const prevWeek = Math.floor(prev.getDate() / 7);
+                                                const currWeek = Math.floor(curr.getDate() / 7);
+                                                return currWeek !== prevWeek;
+                                              })
+                                              .map(d => d.date);
+                                          }
+                                          return filteredChartData
+                                            .filter((d, i) => {
+                                              if (i === 0) return true;
+                                              const prev = new Date(filteredChartData[i-1].date);
+                                              const curr = new Date(d.date);
+                                              return curr.getMonth() !== prev.getMonth() || curr.getFullYear() !== prev.getFullYear();
+                                            })
+                                            .map(d => d.date);
+                                        })()}
                                         tick={{ fontSize: 11, fill: "#94a3b8" }}
-                                        tickFormatter={(value) =>
-                                            new Date(value).toLocaleDateString("cs-CZ", { month: "short", year: "2-digit" })
-                                        }
+                                        tickFormatter={(value) => {
+                                          const d = new Date(value);
+                                          if (historyRange === "5D" || historyRange === "1M") {
+                                            return d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short" });
+                                          }
+                                          return d.toLocaleDateString("cs-CZ", { month: "short", year: "2-digit" });
+                                        }}
                                     />
                                     <YAxis
+                                        domain={["auto", "auto"]}
                                         tick={{ fontSize: 11, fill: "#94a3b8" }}
                                         tickFormatter={(value) => {
                                             if (value < 1000) return value.toString();
@@ -508,8 +578,8 @@ export default function PortfolioDetailPage() {
                                     </td>
                                     <td className="px-6 py-4 font-bold text-slate-800">{t.assetSymbol}</td>
                                     <td className="px-6 py-4 text-right font-mono text-slate-900">{t.quantity}</td>
-                                    <td className="px-6 py-4 text-right font-mono">{t.pricePerUnit.toLocaleString("cs-CZ")}</td>
-                                    <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">{(t.quantity * t.pricePerUnit).toLocaleString("cs-CZ")}</td>
+                                    <td className="px-6 py-4 text-right font-mono">{t.pricePerUnit.toLocaleString("cs-CZ")}<span className="ml-1 text-xs text-slate-400">{t.currency || "USD"}</span></td>
+                                    <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">{(t.quantity * t.pricePerUnit).toLocaleString("cs-CZ")}<span className="ml-1 text-xs text-slate-400">{t.currency || "USD"}</span></td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                                             <button onClick={() => {

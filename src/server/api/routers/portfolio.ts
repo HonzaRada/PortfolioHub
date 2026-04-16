@@ -80,39 +80,59 @@ export const portfolioRouter = createTRPCRouter({
       });
     }),
 
-  // NOVÉ: Stažení živých cen z Finnhub API
+  // NOVÉ: Stažení živých cen z Yahoo Finance API
   getPrices: protectedProcedure
     .input(z.object({ symbols: z.array(z.string()) }))
     .query(async ({ input }) => {
       const prices: Record<string, number> = {};
-      const apiKey = process.env.FINNHUB_API_KEY; // Načteme klíč z .env
 
-      // Ochrana: pokud zapomeneme přidat klíč do .env
-      if (!apiKey) {
-        console.error("Chybí FINNHUB_API_KEY v .env souboru!");
-        return prices; 
-      }
+      const fetchYahooPrice = async (symbol: string): Promise<{ price: number; currency: string } | null> => {
+        try {
+          const response = await fetch(
+            `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`
+          );
+          if (!response.ok) return null;
+          const data = await response.json();
+          if (!data.chart?.result?.[0]) return null;
+          const closes = data.chart.result[0].indicators?.quote?.[0]?.close as (number | null)[];
+          const currency = data.chart.result[0].meta?.currency as string | undefined;
+          if (!closes) return null;
+          const price = [...closes].reverse().find((p) => p !== null && p > 0) ?? null;
+          if (price === null) return null;
+          return { price, currency: currency || "USD" };
+        } catch {
+          return null;
+        }
+      };
+
+      const knownCrypto = ["BTC", "ETH", "SOL", "DOGE", "ADA", "XRP", "DOT", "AVAX", "MATIC", "LINK", "UNI", "LTC", "BCH", "XLM", "ATOM", "ALGO", "VET", "FIL", "TRX", "EOS"];
 
       for (const symbol of input.symbols) {
-        try {
-          // Zeptáme se Finnhubu na aktuální cenu (Quote endpoint)
-          const response = await fetch(
-            `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`
-          );
-
-          if (!response.ok) continue;
-
-          const data = await response.json();
-
-          // Finnhub vrací aktuální cenu pod písmenem 'c' (current price)
-          // Pokud symbol neexistuje, 'c' je obvykle 0
-          if (data && data.c > 0) {
-            prices[symbol] = data.c;
+        let priceData: { price: number; currency: string } | null = null;
+        
+        if (knownCrypto.includes(symbol)) {
+          // Pro známé krypto, jdi rovnou na -USD
+          priceData = await fetchYahooPrice(`${symbol}-USD`);
+        } else {
+          // Nejdřív zkus symbol přímo
+          priceData = await fetchYahooPrice(symbol);
+          
+          // Pokud nenalezeno a symbol nemá příponu, zkus -USD (pro krypto)
+          if (!priceData && !symbol.includes("-") && !symbol.includes(".")) {
+            priceData = await fetchYahooPrice(`${symbol}-USD`);
           }
-        } catch (error) {
-          console.log(`Cena nenalezena pro symbol: ${symbol}`);
+        }
+        
+        if (priceData) {
+          // Pokud je currency "GBp", vydělíme 100 (konverze z pencí na libry)
+          let finalPrice = priceData.price;
+          if (priceData.currency === "GBp") {
+            finalPrice = priceData.price / 100;
+          }
+          prices[symbol] = finalPrice;
         }
       }
+
       return prices;
     }),
 
@@ -265,6 +285,8 @@ export const portfolioRouter = createTRPCRouter({
               const data = await response.json();
 
               if (data.chart?.result?.[0]) {
+                const yahooMeta = data.chart.result[0].meta;
+                const isGBp = yahooMeta?.currency === "GBp";
                 const timestamps = data.chart.result[0].timestamp;
                 const closePrices = data.chart.result[0].indicators?.quote?.[0]?.close;
 
@@ -275,7 +297,7 @@ export const portfolioRouter = createTRPCRouter({
                     const dateStr = date.toISOString().split("T")[0];
                     const closePrice = closePrices[index];
                     if (closePrice) {
-                      priceHistory[symbol][dateStr] = closePrice;
+                      priceHistory[symbol][dateStr] = isGBp ? closePrice / 100 : closePrice;
                     }
                   });
                 }
@@ -512,6 +534,8 @@ export const portfolioRouter = createTRPCRouter({
           const data = await response.json();
 
           if (data.chart?.result?.[0]) {
+            const yahooMeta = data.chart.result[0].meta;
+            const isGBp = yahooMeta?.currency === "GBp";
             const timestamps = data.chart.result[0].timestamp;
             const closePrices = data.chart.result[0].indicators?.quote?.[0]?.close;
 
@@ -522,7 +546,7 @@ export const portfolioRouter = createTRPCRouter({
                 const dateStr = date.toISOString().split("T")[0];
                 const closePrice = closePrices[index];
                 if (closePrice) {
-                  priceHistory[symbol][dateStr] = closePrice;
+                  priceHistory[symbol][dateStr] = isGBp ? closePrice / 100 : closePrice;
                 }
               });
             }
