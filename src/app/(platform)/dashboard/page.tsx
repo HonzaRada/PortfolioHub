@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { api } from "~/trpc/react";
 import Link from "next/link";
 import { PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+import { StatCard } from "~/app/_components/StatCard";
+import { CurrencySelector } from "~/app/_components/CurrencySelector";
 import { useCurrencyStore } from "~/store/currencyStore";
 
 export default function DashboardPage() {
@@ -133,66 +135,35 @@ export default function DashboardPage() {
           <p className="text-slate-500 mt-1">Statistiky všech tvých portfolií na jednom místě.</p>
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600 mr-2 uppercase tracking-wider">
-            Zobrazit v:
-          </label>
-          <select
-            value={displayCurrency}
-            onChange={(e) => setDisplayCurrency(e.target.value as any)}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-          >
-            <option value="CZK">🇨🇿 CZK</option>
-            <option value="USD">🇺🇸 USD</option>
-            <option value="EUR">🇪🇺 EUR</option>
-            <option value="GBP">🇬🇧 GBP</option>
-          </select>
+          <CurrencySelector value={displayCurrency} onChange={setDisplayCurrency} />
         </div>
       </div>
 
       {/* Čtyři hlavní karty se statistikami */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Aktuální hodnota */}
-        <div className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-violet-100 p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-violet-600 uppercase tracking-wider mb-2">
-            Aktuální hodnota
-          </h3>
-          <p className="text-3xl font-bold text-violet-900">
-            {totalValueAll.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
-          </p>
-          <p className="text-sm text-violet-700 mt-1">{displayCurrency}</p>
-        </div>
-
-        {/* Investováno */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Investováno
-          </h3>
-          <p className="text-3xl font-bold text-slate-900">
-            {totalInvestedDisplay.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
-          </p>
-          <p className="text-sm text-slate-500 mt-1">{displayCurrency}</p>
-        </div>
-
-        {/* Zisk/Ztráta */}
-        <div className={`rounded-2xl border bg-gradient-to-br ${pnlBgColor} p-6 shadow-sm`}>
-          <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${totalPnLAll >= 0 ? "text-green-600" : "text-red-600"}`}>
-            Zisk/Ztráta
-          </h3>
-          <p className={`text-3xl font-bold ${pnlColor}`}>
-            {totalPnLAll >= 0 ? "+" : ""}{totalPnLAll.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
-          </p>
-          <p className={`text-sm mt-1 ${totalPnLAll >= 0 ? "text-green-700" : "text-red-700"}`}>{displayCurrency}</p>
-        </div>
-
-        {/* Zisk/Ztráta % */}
-        <div className={`rounded-2xl border bg-gradient-to-br ${pnlBgColor} p-6 shadow-sm`}>
-          <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${totalPnLAll >= 0 ? "text-green-600" : "text-red-600"}`}>
-            Zisk/Ztráta %
-          </h3>
-          <p className={`text-3xl font-bold ${pnlColor}`}>
-            {totalPnLAll >= 0 ? "+" : ""}{totalPnLPercent}%
-          </p>
-        </div>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-8">
+        <StatCard
+          title="Aktuální hodnota"
+          value={totalValueAll.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
+          subtitle={displayCurrency}
+          variant="purple"
+        />
+        <StatCard
+          title="Celkem investováno"
+          value={totalInvestedDisplay.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
+          subtitle={displayCurrency}
+          variant="slate"
+        />
+        <StatCard
+          title="Zisk/Ztráta"
+          value={`${totalPnLAll >= 0 ? "+" : ""}${totalPnLAll.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}`}
+          subtitle={displayCurrency}
+          variant={totalPnLAll >= 0 ? "green" : "red"}
+        />
+        <StatCard
+          title="Zisk/Ztráta (%)"
+          value={`${totalInvestedDisplay > 0 ? (totalPnLAll >= 0 ? "+" : "") + (totalPnLAll / totalInvestedDisplay * 100).toFixed(2) : "0.00"}%`}
+          variant={totalPnLAll >= 0 ? "green" : "red"}
+        />
       </div>
 
       {/* Sekce "Vývoj hodnoty účtu" — lineární graf */}

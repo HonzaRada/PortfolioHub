@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 import { signOut, useSession } from "next-auth/react";
 import { useCurrencyStore } from "~/store/currencyStore";
+import { CurrencySelector } from "~/app/_components/CurrencySelector";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -145,16 +146,7 @@ export default function SettingsPage() {
 
         <div>
           <label className="block text-sm font-medium text-slate-900 mb-2">Výchozí měna</label>
-          <select
-            value={displayCurrency}
-            onChange={(e) => setDisplayCurrency(e.target.value as any)}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer w-full sm:w-40"
-          >
-            <option value="CZK">🇨🇿 CZK</option>
-            <option value="USD">🇺🇸 USD</option>
-            <option value="EUR">🇪🇺 EUR</option>
-            <option value="GBP">🇬🇧 GBP</option>
-          </select>
+          <CurrencySelector value={displayCurrency} onChange={setDisplayCurrency} label={false} />
           <p className="mt-2 text-sm text-slate-500">
             Tato měna se použije jako výchozí zobrazení na všech stránkách.
           </p>

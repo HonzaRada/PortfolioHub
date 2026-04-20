@@ -21,6 +21,9 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { CreateTransactionModal } from "~/app/_components/CreateTransactionModal";
 import { ConfirmModal } from "~/app/_components/ConfirmModal";
+import { StatCard } from "~/app/_components/StatCard";
+import { HoldingCard } from "~/app/_components/HoldingCard";
+import { CurrencySelector } from "~/app/_components/CurrencySelector";
 import { useCurrencyStore } from "~/store/currencyStore";
 
 type TransactionData = {
@@ -318,66 +321,36 @@ export default function PortfolioDetailPage() {
             {/* --- PŘEPÍNAČ MĚN A STAT KARTY --- */}
             <div className="mb-8">
                 <div className="flex justify-end mb-4">
-                    <div>
-                        <label className="text-xs font-medium text-slate-600 mr-2 uppercase tracking-wider">Zobrazit v:</label>
-                        <select
-                            value={displayCurrency}
-                            onChange={(e) => setDisplayCurrency(e.target.value as any)}
-                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                        >
-                            <option value="CZK">🇨🇿 CZK</option>
-                            <option value="USD">🇺🇸 USD</option>
-                            <option value="EUR">🇪🇺 EUR</option>
-                            <option value="GBP">🇬🇧 GBP</option>
-                        </select>
-                    </div>
+                    <CurrencySelector value={displayCurrency} onChange={setDisplayCurrency} />
                 </div>
 
                 {holdings.length > 0 && (
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                        {/* Aktuální hodnota */}
-                        <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-lg">
-                            <p className="text-indigo-100 text-xs font-medium uppercase tracking-wider mb-2">Aktuální hodnota</p>
-                            <div className="flex flex-col">
-                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
-                                    {totalValue.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
-                                </h3>
-                                <span className="text-sm font-medium text-indigo-200">{displayCurrency}</span>
-                            </div>
-                            {isPricesLoading && <p className="text-indigo-200 text-[10px] mt-2 animate-pulse">Aktualizuji...</p>}
-                        </div>
-
-                        {/* Investováno */}
-                        <div className="rounded-2xl bg-slate-100 p-6 text-slate-900 shadow-sm">
-                            <p className="text-slate-600 text-xs font-medium uppercase tracking-wider mb-2">Investováno</p>
-                            <div className="flex flex-col">
-                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
-                                    {portfolioStats.totalInvested.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
-                                </h3>
-                                <span className="text-sm font-medium text-slate-600">{displayCurrency}</span>
-                            </div>
-                        </div>
-
-                        {/* Zisk/Ztráta (Kč) */}
-                        <div className={`rounded-2xl p-6 shadow-lg ${portfolioStats.totalPnL >= 0 ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white" : "bg-gradient-to-br from-red-500 to-rose-600 text-white"}`}>
-                            <p className={`text-xs font-medium uppercase tracking-wider mb-2 ${portfolioStats.totalPnL >= 0 ? "text-green-100" : "text-red-100"}`}>Zisk/Ztráta (Kč)</p>
-                            <div className="flex flex-col">
-                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
-                                    {portfolioStats.totalPnL >= 0 ? "+" : ""}{portfolioStats.totalPnL.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
-                                </h3>
-                                <span className="text-sm font-medium">{displayCurrency}</span>
-                            </div>
-                        </div>
-
-                        {/* Zisk/Ztráta (%) */}
-                        <div className={`rounded-2xl p-6 shadow-lg ${portfolioStats.totalPnLPercent >= 0 ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white" : "bg-gradient-to-br from-red-500 to-rose-600 text-white"}`}>
-                            <p className={`text-xs font-medium uppercase tracking-wider mb-2 ${portfolioStats.totalPnLPercent >= 0 ? "text-green-100" : "text-red-100"}`}>Zisk/Ztráta (%)</p>
-                            <div className="flex flex-col">
-                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
-                                    {portfolioStats.totalPnLPercent >= 0 ? "+" : ""}{portfolioStats.totalPnLPercent.toFixed(2)}%
-                                </h3>
-                            </div>
-                        </div>
+                        <StatCard
+                            title="Aktuální hodnota"
+                            value={totalValue.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
+                            subtitle={displayCurrency}
+                            variant="purple"
+                            isLoading={isPricesLoading}
+                            loadingText="Aktualizuji..."
+                        />
+                        <StatCard
+                            title="Investováno"
+                            value={portfolioStats.totalInvested.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}
+                            subtitle={displayCurrency}
+                            variant="slate"
+                        />
+                        <StatCard
+                            title="Zisk/Ztráta"
+                            value={`${portfolioStats.totalPnL >= 0 ? "+" : ""}${portfolioStats.totalPnL.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}`}
+                            subtitle={displayCurrency}
+                            variant={portfolioStats.totalPnL >= 0 ? "green" : "red"}
+                        />
+                        <StatCard
+                            title="Zisk/Ztráta (%)"
+                            value={`${portfolioStats.totalPnLPercent >= 0 ? "+" : ""}${portfolioStats.totalPnLPercent.toFixed(2)}%`}
+                            variant={portfolioStats.totalPnLPercent >= 0 ? "green" : "red"}
+                        />
                     </div>
                 )}
             </div>
@@ -386,41 +359,18 @@ export default function PortfolioDetailPage() {
             <div className="mb-8">
                 <h2 className="mb-4 text-lg font-bold text-slate-900">Aktuální složení portfolia</h2>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
-                    {holdings.map(({ symbol, quantity, currency }) => {
-                        const rawPrice = livePrices?.[symbol];
-                        
-                        // Převod individuální ceny do vybrané měny
-                        const rateAssetToUsd = exchangeRates?.[currency] || 1;
-                        const rateUsdToDisplay = exchangeRates?.[displayCurrency] || 1;
-                        const priceInDisplayCurrency = rawPrice ? (rawPrice / rateAssetToUsd) * rateUsdToDisplay : undefined;
-                        
-                        const assetValue = priceInDisplayCurrency ? quantity * priceInDisplayCurrency : 0;
-
-                        return (
-                            <div key={symbol} className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-                                <span className="mb-1 text-xs font-semibold tracking-wider text-slate-500 uppercase">{symbol}</span>
-                                <span className="font-mono text-xl font-bold text-slate-900">
-                                    {Number.isInteger(quantity) ? quantity : parseFloat(quantity.toFixed(6))}
-                                    <span className="ml-1 text-xs font-normal text-slate-400">ks</span>
-                                </span>
-                                
-                                <div className="mt-3 w-full border-t border-slate-100 pt-3">
-                                    {isPricesLoading ? (
-                                        <span className="text-xs text-slate-400 animate-pulse">Načítám...</span>
-                                    ) : priceInDisplayCurrency ? (
-                                        <div className="flex flex-col">
-                                            <span className="text-xs text-slate-500">Cena: {priceInDisplayCurrency.toLocaleString("cs-CZ", { maximumFractionDigits: 1 })} {displayCurrency}</span>
-                                            <span className="mt-1 font-mono text-lg font-bold text-indigo-600">
-                                                {assetValue.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })} {displayCurrency}
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-[10px] text-orange-400">Cena nenalezena</span>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {holdings.map(({ symbol, quantity, currency }) => (
+                        <HoldingCard
+                            key={symbol}
+                            symbol={symbol}
+                            quantity={quantity}
+                            currency={currency}
+                            displayCurrency={displayCurrency}
+                            livePrice={livePrices?.[symbol]}
+                            isLoading={isPricesLoading}
+                            exchangeRates={exchangeRates}
+                        />
+                    ))}
                 </div>
             </div>
 
