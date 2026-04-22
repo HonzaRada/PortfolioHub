@@ -73,12 +73,6 @@ export default function DashboardPage() {
     return totalValueAll - totalInvestedDisplay;
   }, [totalValueAll, totalInvestedDisplay]);
 
-  // Procento P&L
-  const totalPnLPercent = useMemo(() => {
-    if (totalInvestedDisplay === 0) return 0;
-    return ((totalPnLAll / totalInvestedDisplay) * 100).toFixed(2);
-  }, [totalPnLAll, totalInvestedDisplay]);
-
   // Data pro koláčový graf — seřazeny sestupně
   const portfolioChartData = useMemo(() => {
     if (!portfoliosStats || !exchangeRates) return [];
@@ -100,12 +94,6 @@ export default function DashboardPage() {
       .sort((a, b) => b.invested - a.invested);
   }, [portfoliosStats, exchangeRates, displayCurrency]);
 
-  // Výpočet celkového počtu transakcí
-  const totalTransactions = useMemo(() => {
-    if (!portfoliosStats) return 0;
-    return portfoliosStats.reduce((sum, p) => sum + p.transactionCount, 0);
-  }, [portfoliosStats]);
-
   // Data pro graf vývoje hodnoty účtu
   const accountChartData = useMemo(() => {
     if (!accountHistory || !exchangeRates) return [];
@@ -121,10 +109,6 @@ export default function DashboardPage() {
   if (!portfoliosStats) {
     return <div className="p-8 text-center text-slate-500">Načítám data...</div>;
   }
-
-  const pnlColor = totalPnLAll >= 0 ? "text-green-600" : "text-red-600";
-  const pnlBgColor = totalPnLAll >= 0 ? "from-green-50 to-green-100 border-green-200" : "from-red-50 to-red-100 border-red-200";
-  const pnlTextColor = totalPnLAll >= 0 ? "text-green-900" : "text-red-900";
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
