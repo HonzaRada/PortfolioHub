@@ -50,7 +50,7 @@ export function Sidebar() {
       {/* Spodní sekce (Logout) */}
       <div className="absolute bottom-0 w-full p-4 border-t border-slate-100">
         <button
-          onClick={() => signOut()}
+          onClick={() => signOut({ callbackUrl: "/" })}
           className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
         >
           <span>🚪</span>
