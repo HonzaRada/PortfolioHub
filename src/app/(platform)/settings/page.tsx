@@ -7,12 +7,15 @@ import { useCurrencyStore } from "~/store/currencyStore";
 import { CurrencySelector } from "~/app/_components/CurrencySelector";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { ConfirmModal } from "~/app/_components/ConfirmModal";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const { displayCurrency, setDisplayCurrency } = useCurrencyStore();
   const [isExporting, setIsExporting] = useState(false);
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Query pro export dat (disabled na začátku)
   const { data: exportData, refetch: refetchExport } = api.transaction.exportAll.useQuery(undefined, {
@@ -30,10 +33,12 @@ export default function SettingsPage() {
     },
   });
 
-  const handleSignOut = async () => {
-    if (window.confirm("Opravdu se chceš odhlásit?")) {
-      await signOut({ callbackUrl: "/" });
-    }
+  const handleSignOut = () => {
+    setIsSignOutModalOpen(true);
+  };
+
+  const handleSignOutConfirm = async () => {
+    await signOut({ callbackUrl: "/" });
   };
 
   const handleExportCSV = async () => {
@@ -86,14 +91,12 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteAll = async () => {
-    if (
-      window.confirm(
-        "⚠️ VAROVÁNÍ: Chystáš se smazat VŠECHNA portfolia a transakce. Tuto akci nelze vrátit. Opravdu pokračovat?"
-      )
-    ) {
-      deleteAll.mutate();
-    }
+  const handleDeleteAll = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteAllConfirm = () => {
+    deleteAll.mutate();
   };
 
   if (!session) {
@@ -177,6 +180,25 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isSignOutModalOpen}
+        onClose={() => setIsSignOutModalOpen(false)}
+        onConfirm={handleSignOutConfirm}
+        isLoading={false}
+        title="Odhlásit se?"
+        description="Opravdu se chceš odhlásit z aplikace?"
+        confirmLabel="Odhlásit se"
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteAllConfirm}
+        isLoading={deleteAll.isPending}
+        title="Smazat všechna data?"
+        description="⚠️ Tato akce je nevratná. Budou smazána všechna portfolia a transakce."
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ type Props = {
   isLoading: boolean;
   title?: string;
   description?: string;
+  confirmLabel?: string;
 };
 
 export function ConfirmModal({
@@ -16,6 +17,7 @@ export function ConfirmModal({
   isLoading,
   title = "Opravdu smazat?",
   description = "Tato akce je nevratná.",
+  confirmLabel = "Smazat",
 }: Props) {
   if (!isOpen) return null;
 
@@ -52,7 +54,7 @@ export function ConfirmModal({
             disabled={isLoading}
             className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-red-700 hover:shadow-lg disabled:opacity-50 disabled:shadow-none transition flex items-center justify-center gap-2"
           >
-            {isLoading ? "Mažu..." : "Smazat"}
+            {isLoading ? "Mažu..." : confirmLabel}
           </button>
         </div>
       </div>
