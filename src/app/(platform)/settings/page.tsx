@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession, signOut } from "~/lib/auth-client";
 import { useCurrencyStore } from "~/store/currencyStore";
 import { CurrencySelector } from "~/app/_components/CurrencySelector";
 import toast from "react-hot-toast";
@@ -38,7 +38,13 @@ export default function SettingsPage() {
   };
 
   const handleSignOutConfirm = async () => {
-    await signOut({ callbackUrl: "/" });
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+        },
+      },
+    });
   };
 
   const handleExportCSV = async () => {
@@ -99,11 +105,11 @@ export default function SettingsPage() {
     deleteAll.mutate();
   };
 
-  if (!session) {
+  if (!session?.user) {
     return <div className="p-8 text-center text-slate-500">Načítám...</div>;
-  }
+  } 
 
-  const userInitial = session.user?.name?.charAt(0).toUpperCase() || "U";
+  const userInitial = session.user.name?.charAt(0).toUpperCase() ?? "U";
 
   return (
     <div className="mx-auto max-w-2xl p-8">

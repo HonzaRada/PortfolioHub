@@ -1,24 +1,67 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { authClient } from "~/lib/auth-client";
 import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const urlError = searchParams.get("error");
 
-  const handleSignIn = async (provider: string) => {
+  const handleOAuth = async (provider: "google" | "discord") => {
     setIsLoading(provider);
-    await signIn(provider, { callbackUrl: "/dashboard" });
+    await authClient.signIn.social({
+      provider,
+      callbackURL: "/dashboard",
+    });
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading("email");
+
+    if (isRegister) {
+      const { error } = await authClient.signUp.email({
+        email,
+        password,
+        name,
+        callbackURL: "/dashboard",
+      });
+      if (error) {
+        setError(error.message ?? "Chyba při registraci");
+        setIsLoading(null);
+        return;
+      }
+    } else {
+      const { error } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "/dashboard",
+      });
+      if (error) {
+        setError(error.message ?? "Nesprávný email nebo heslo");
+        setIsLoading(null);
+        return;
+      }
+    }
+
+    router.push("/dashboard");
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        
+
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-3 mb-8">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-lg">
@@ -27,27 +70,27 @@ export default function LoginPage() {
           <span className="text-2xl font-bold text-slate-900">PortfolioApp</span>
         </Link>
 
-        {/* Chybová hláška */}
-        {error === "OAuthAccountNotLinked" && (
+        {/* Chybová hláška z URL */}
+        {urlError === "OAuthAccountNotLinked" && (
           <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
             <p className="font-semibold mb-1">Účet již existuje</p>
-            <p>Na tento email již existuje účet přihlášený přes jiného poskytovatele. Použij prosím stejný způsob přihlášení jako při registraci.</p>
+            <p>Na tento email již existuje účet přihlášený přes jiného poskytovatele.</p>
           </div>
         )}
 
         {/* Karta */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
           <h1 className="text-2xl font-bold text-slate-900 text-center mb-2">
-            Přihlásit se
+            {isRegister ? "Vytvořit účet" : "Přihlásit se"}
           </h1>
           <p className="text-slate-500 text-center text-sm mb-8">
             Vyber způsob přihlášení
           </p>
 
-          <div className="flex flex-col gap-3">
-            {/* Google */}
+          {/* OAuth tlačítka */}
+          <div className="flex flex-col gap-3 mb-6">
             <button
-              onClick={() => handleSignIn("google")}
+              onClick={() => handleOAuth("google")}
               disabled={isLoading !== null}
               className="flex items-center justify-center gap-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -60,9 +103,8 @@ export default function LoginPage() {
               {isLoading === "google" ? "Přihlašuji..." : "Pokračovat s Google"}
             </button>
 
-            {/* Discord */}
             <button
-              onClick={() => handleSignIn("discord")}
+              onClick={() => handleOAuth("discord")}
               disabled={isLoading !== null}
               className="flex items-center justify-center gap-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -72,6 +114,66 @@ export default function LoginPage() {
               {isLoading === "discord" ? "Přihlašuji..." : "Pokračovat s Discord"}
             </button>
           </div>
+
+          {/* Oddělovač */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex-1 h-px bg-slate-200"></div>
+            <span className="text-xs text-slate-400">nebo</span>
+            <div className="flex-1 h-px bg-slate-200"></div>
+          </div>
+
+          {/* Email/heslo formulář */}
+          <form onSubmit={handleEmailSubmit} className="flex flex-col gap-3">
+            {isRegister && (
+              <input
+                type="text"
+                placeholder="Jméno"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            )}
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <input
+              type="password"
+              placeholder="Heslo"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+
+            {error && (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading !== null}
+              className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading === "email" ? "Načítám..." : isRegister ? "Vytvořit účet" : "Přihlásit se"}
+            </button>
+          </form>
+
+          {/* Přepínač registrace/přihlášení */}
+          <p className="text-center text-sm text-slate-500 mt-4">
+            {isRegister ? "Už máš účet?" : "Nemáš účet?"}{" "}
+            <button
+              onClick={() => { setIsRegister(!isRegister); setError(null); }}
+              className="text-indigo-600 font-semibold hover:underline"
+            >
+              {isRegister ? "Přihlásit se" : "Zaregistrovat se"}
+            </button>
+          </p>
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-6">

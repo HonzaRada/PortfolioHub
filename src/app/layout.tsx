@@ -3,9 +3,7 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import { TRPCReactProvider } from "~/trpc/react";
-import { NextAuthProvider } from "~/app/_components/NextAuthProvider";
 import { Toaster } from "react-hot-toast";
-
 
 export const metadata: Metadata = {
     title: "Investiční Portfolio",
@@ -23,15 +21,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="cs" className={`${geist.variable}`}>
-            {/* 2. Tady přidáváme barvy: bg-slate-50 (světlé pozadí) a text-slate-900 (tmavý text) */}
             <body className="bg-slate-50 text-slate-900 antialiased">
-                {/* 3. Obalíme aplikaci, aby všude fungovalo přihlášení */}
-                <NextAuthProvider>
-                    <TRPCReactProvider>
-                        {children}
-                        <Toaster position="top-right" />
-                    </TRPCReactProvider>
-                </NextAuthProvider>
+                <TRPCReactProvider>
+                    {children}
+                    <Toaster position="top-right" />
+                </TRPCReactProvider>
             </body>
         </html>
     );

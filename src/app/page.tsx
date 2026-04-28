@@ -1,17 +1,16 @@
-import { auth } from "~/server/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-// Přidáme import tvé komponenty
 import { GuestView } from "~/app/_components/GuestView";
+import { auth } from "~/lib/auth";
 
 export default async function HomePage() {
-  // Zjistíme, jestli je uživatel přihlášený
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  // Pokud ANO, přesměrujeme ho rovnou na jeho Dashboard
   if (session) {
     redirect("/dashboard");
   }
 
-  // Pokud NE, vyrenderujeme tvou externí komponentu
   return <GuestView />;
 }
