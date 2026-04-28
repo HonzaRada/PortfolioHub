@@ -82,7 +82,7 @@ model Portfolio {
 model Transaction {
     id        String   @id @default(cuid())
     
-    type         String
+    type         TransactionType
     assetSymbol  String
     quantity     Float
     pricePerUnit Float

@@ -1,8 +1,9 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export function GuestView() {
+    const router = useRouter();
     return (
         <div className="flex min-h-screen flex-col bg-white">
             {/* 1. Navigační lišta (jednoduchá) */}
@@ -18,7 +19,7 @@ export function GuestView() {
                         </span>
                     </div>
                     <button
-                        onClick={() => signIn("discord")}
+                        onClick={() => router.push("/login")}
                         className="text-sm font-medium text-slate-600 transition hover:text-indigo-600"
                     >
                         Přihlásit se
@@ -50,7 +51,7 @@ export function GuestView() {
 
                         <div className="flex flex-col gap-4 sm:flex-row">
                             <button
-                                onClick={() => signIn("discord")}
+                                onClick={() => router.push("/login")}
                                 className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-lg transition-all hover:bg-indigo-700 hover:shadow-indigo-200"
                             >
                                 Začít zdarma
@@ -122,7 +123,7 @@ export function GuestView() {
             {/* 3. Patička */}
             <footer className="border-t border-slate-100 bg-white py-8">
                 <div className="container mx-auto px-6 text-center text-sm text-slate-500">
-                    © 2024 Investiční Portfolio (Bakalářská práce). Všechna
+                    © 2026 Investiční Portfolio (Bakalářská práce). Všechna
                     práva vyhrazena.
                 </div>
             </footer>
