@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
+import { getYahooSymbol } from "~/lib/exchangeMap";
 
 export const transactionRouter = createTRPCRouter({
   // 1. READ (Načítáme transakce pro konkrétní portfolio)
@@ -13,9 +14,9 @@ export const transactionRouter = createTRPCRouter({
       });
 
       if (!portfolio) {
-        throw new TRPCError({ 
-          code: "UNAUTHORIZED", 
-          message: "Portfolio nenalezeno nebo k němu nemáte přístup." 
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Portfolio nenalezeno nebo k němu nemáte přístup.",
         });
       }
 
@@ -35,14 +36,14 @@ export const transactionRouter = createTRPCRouter({
         quantity: z.number().positive(),
         pricePerUnit: z.number().positive(),
         date: z.date(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // BEZPEČNOST: Kontrola majitele portfolia před přidáním
       const portfolio = await ctx.db.portfolio.findUnique({
         where: { id: input.portfolioId, userId: ctx.session.user.id },
       });
-      
+
       if (!portfolio) throw new TRPCError({ code: "UNAUTHORIZED" });
 
       // Pokud jde o PRODEJ, zkontrolujeme, jestli má uživatel dostatek aktiva
@@ -89,59 +90,59 @@ export const transactionRouter = createTRPCRouter({
         transactions: z.array(
           z.object({
             assetSymbol: z.string().min(1),
+            listingExchange: z.string(),
             type: z.enum(["BUY", "SELL"]),
             quantity: z.number().positive(),
             pricePerUnit: z.number().positive(),
             currency: z.string().optional(),
             date: z.date(),
-          })
+          }),
         ),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
-      // 1. Ověříme, že portfolio existuje a patří uživateli
       const portfolio = await ctx.db.portfolio.findUnique({
         where: { id: input.portfolioId, userId: ctx.session.user.id },
       });
       if (!portfolio) throw new TRPCError({ code: "UNAUTHORIZED" });
 
-      // 2. Připravíme data pro hromadný zápis (přidáme k nim portfolioId)
-      const dataToInsert = input.transactions.map((tx) => ({
-        portfolioId: input.portfolioId,
-        assetSymbol: tx.assetSymbol.toUpperCase(),
-        type: tx.type,
-        quantity: tx.quantity,
-        pricePerUnit: tx.pricePerUnit,
-        currency: tx.currency,
-        date: tx.date,
-      }));
+      const dataToInsert = input.transactions.map((tx) => {
+        const yahooSymbol = getYahooSymbol(tx.assetSymbol, tx.listingExchange);
 
-      // 3. Použijeme createMany z Prismy pro bleskový zápis všech najednou
+        return {
+          portfolioId: input.portfolioId,
+          assetSymbol: yahooSymbol.toUpperCase(),
+          type: tx.type,
+          quantity: tx.quantity,
+          pricePerUnit: tx.pricePerUnit,
+          currency: tx.currency,
+          date: tx.date,
+        };
+      });
+
       const result = await ctx.db.transaction.createMany({
         data: dataToInsert,
       });
 
-      // 4. VALIDACE ZŮSTATKŮ PO IMPORTU
+      // Validace zůstatků po importu
       const allTransactions = await ctx.db.transaction.findMany({
-        where: {
-          portfolioId: input.portfolioId,
-        },
+        where: { portfolioId: input.portfolioId },
       });
 
-      // Spočítáme zůstatek pro každý symbol
       const balances = new Map<string, number>();
       allTransactions.forEach((tx) => {
-        const currentBalance = balances.get(tx.assetSymbol) ?? 0;
-        const newBalance = tx.type === "BUY" ? currentBalance + tx.quantity : currentBalance - tx.quantity;
-        balances.set(tx.assetSymbol, newBalance);
+        const current = balances.get(tx.assetSymbol) ?? 0;
+        balances.set(
+          tx.assetSymbol,
+          tx.type === "BUY" ? current + tx.quantity : current - tx.quantity,
+        );
       });
 
-      // Najdeme symboly se záporným zůstatkem
       const warnings: string[] = [];
       balances.forEach((balance, symbol) => {
         if (balance < -0.000001) {
           warnings.push(
-            `Symbol ${symbol} má záporný zůstatek (${balance.toFixed(4)} ks) — zkontroluj transakce.`
+            `Symbol ${symbol} má záporný zůstatek (${balance.toFixed(4)} ks) — zkontroluj transakce.`,
           );
         }
       });
@@ -159,7 +160,10 @@ export const transactionRouter = createTRPCRouter({
         include: { portfolio: true },
       });
 
-      if (!transaction || transaction.portfolio.userId !== ctx.session.user.id) {
+      if (
+        !transaction ||
+        transaction.portfolio.userId !== ctx.session.user.id
+      ) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 
@@ -178,7 +182,7 @@ export const transactionRouter = createTRPCRouter({
         quantity: z.number().positive(),
         pricePerUnit: z.number().positive(),
         date: z.date(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // BEZPEČNOST: Stejná kontrola jako u mazání
@@ -187,7 +191,10 @@ export const transactionRouter = createTRPCRouter({
         include: { portfolio: true },
       });
 
-      if (!transaction || transaction.portfolio.userId !== ctx.session.user.id) {
+      if (
+        !transaction ||
+        transaction.portfolio.userId !== ctx.session.user.id
+      ) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 
@@ -266,7 +273,9 @@ export const transactionRouter = createTRPCRouter({
     });
 
     // Seřadíme podle data vzestupně
-    transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    transactions.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
 
     return transactions;
   }),
