@@ -7,6 +7,7 @@ import { PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, ResponsiveCont
 import { StatCard } from "~/app/_components/StatCard";
 import { CurrencySelector } from "~/app/_components/CurrencySelector";
 import { useCurrencyStore } from "~/store/currencyStore";
+import { chartColors } from "~/lib/chartColors";
 
 export default function DashboardPage() {
   const { displayCurrency, setDisplayCurrency } = useCurrencyStore();
@@ -103,8 +104,6 @@ export default function DashboardPage() {
       value: point.value * (exchangeRates[displayCurrency] || 1),
     }));
   }, [accountHistory, exchangeRates, displayCurrency]);
-
-  const colors = ["#6366f1", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
   if (!portfoliosStats) {
     return <div className="p-8 text-center text-slate-500">Načítám data...</div>;
@@ -219,7 +218,7 @@ export default function DashboardPage() {
                   innerRadius={70}
                 >
                   {portfolioChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                   ))}
                 </Pie>
                 <Legend />

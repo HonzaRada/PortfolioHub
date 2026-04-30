@@ -16,7 +16,7 @@ import {
   Tooltip as RechartsTooltip,
 } from "recharts";
 import { api } from "~/trpc/react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { CreateTransactionModal } from "~/app/_components/CreateTransactionModal";
@@ -25,6 +25,7 @@ import { StatCard } from "~/app/_components/StatCard";
 import { HoldingCard } from "~/app/_components/HoldingCard";
 import { CurrencySelector } from "~/app/_components/CurrencySelector";
 import { useCurrencyStore } from "~/store/currencyStore";
+import { chartColors } from "~/lib/chartColors";
 
 type TransactionData = {
   id: string;
@@ -39,7 +40,6 @@ type TransactionData = {
 export default function PortfolioDetailPage() {
   const params = useParams();
   const portfolioId = params.id as string;
-  const router = useRouter();
   const utils = api.useUtils();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,8 +66,8 @@ export default function PortfolioDetailPage() {
           currency: tx.currency || "USD",
         };
       }
-      if (tx.type === "BUY") balances[tx.assetSymbol].quantity += tx.quantity;
-      else balances[tx.assetSymbol].quantity -= tx.quantity;
+      if (tx.type === "BUY") balances[tx.assetSymbol]!.quantity += tx.quantity;
+      else balances[tx.assetSymbol]!.quantity -= tx.quantity;
     });
 
     return Object.entries(balances)
@@ -182,17 +182,6 @@ export default function PortfolioDetailPage() {
     return data;
   }, [holdings, livePrices, exchangeRates, displayCurrency]);
 
-  const colors = [
-    "#6366f1",
-    "#8b5cf6",
-    "#06b6d4",
-    "#10b981",
-    "#f59e0b",
-    "#ef4444",
-    "#ec4899",
-    "#14b8a6",
-  ];
-
   // NOVÝ: Výpočet dat pro graf vývoje hodnoty portfolia
   const chartData = useMemo(() => {
     if (!portfolioHistory || !exchangeRates) return [];
@@ -267,9 +256,7 @@ export default function PortfolioDetailPage() {
         const parsedTransactions: any[] = [];
         for (const row of results.data as any[]) {
           try {
-            const rawDate = String(row["Date/Time"] || "")
-              .split(";")[0]
-              .trim();
+            const rawDate = (String(row["Date/Time"] || "").split(";")[0] ?? "").trim();
             if (!rawDate) continue;
 
             let parsedDate = /^\d{8}$/.test(rawDate)
@@ -292,7 +279,7 @@ export default function PortfolioDetailPage() {
               .toUpperCase();
             if (assetClass !== "STK") continue;
 
-            const assetSymbol = String(row["UnderlyingSymbol"] || "").trim();
+            const assetSymbol = String(row["Symbol"] || "").trim();
             const listingExchange = String(row["ListingExchange"] || "").trim();
             const currency = String(
               row["CurrencyPrimary"] || row["Currency"] || "USD",
@@ -471,7 +458,7 @@ export default function PortfolioDetailPage() {
                   {allocationData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={colors[index % colors.length]}
+                      fill={chartColors[index % chartColors.length]}
                     />
                   ))}
                 </Pie>
