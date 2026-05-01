@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { getYahooSymbol } from "~/lib/exchangeMap";
+import { calculateBalance } from "~/lib/transactionUtils";
 
 export const transactionRouter = createTRPCRouter({
   // 1. READ (Načítáme transakce pro konkrétní portfolio)
@@ -56,10 +57,7 @@ export const transactionRouter = createTRPCRouter({
           },
         });
 
-        // Spočítáme aktuální zůstatek (Nákupy přičteme, prodeje odečteme)
-        const currentBalance = existingTransactions.reduce((acc, tx) => {
-          return tx.type === "BUY" ? acc + tx.quantity : acc - tx.quantity;
-        }, 0);
+        const currentBalance = calculateBalance(existingTransactions);
 
         // Pokud chce prodat víc, než má, vyhodíme chybu!
         if (input.quantity > currentBalance) {
@@ -130,12 +128,12 @@ export const transactionRouter = createTRPCRouter({
       });
 
       const balances = new Map<string, number>();
-      allTransactions.forEach((tx) => {
-        const current = balances.get(tx.assetSymbol) ?? 0;
-        balances.set(
-          tx.assetSymbol,
-          tx.type === "BUY" ? current + tx.quantity : current - tx.quantity,
+      const symbols = [...new Set(allTransactions.map((tx) => tx.assetSymbol))];
+      symbols.forEach((symbol) => {
+        const symbolTransactions = allTransactions.filter(
+          (tx) => tx.assetSymbol === symbol,
         );
+        balances.set(symbol, calculateBalance(symbolTransactions));
       });
 
       const warnings: string[] = [];
@@ -209,10 +207,7 @@ export const transactionRouter = createTRPCRouter({
           },
         });
 
-        // Spočítáme zůstatek z ostatních transakcí
-        const currentBalance = existingTransactions.reduce((acc, tx) => {
-          return tx.type === "BUY" ? acc + tx.quantity : acc - tx.quantity;
-        }, 0);
+        const currentBalance = calculateBalance(existingTransactions);
 
         // Pokud nová hodnota prodeje přesahuje dostupný zůstatek, vyhodíme chybu
         if (input.quantity > currentBalance) {
