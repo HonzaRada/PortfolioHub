@@ -14,7 +14,7 @@ export default function DashboardPage() {
 
   const { data: portfoliosStats } = api.portfolio.getAllPortfoliosStats.useQuery();
   const { data: allPortfoliosValue } = api.portfolio.getAllPortfoliosValue.useQuery();
-  const { data: exchangeRates } = api.portfolio.getExchangeRates.useQuery(undefined, {
+  const { data: exchangeRates } = api.prices.getExchangeRates.useQuery(undefined, {
     staleTime: 1000 * 60 * 60,
   });
   const { data: accountHistory, isLoading: isHistoryLoading } = api.portfolio.getAllPortfoliosHistory.useQuery();
@@ -32,7 +32,7 @@ export default function DashboardPage() {
   }, [allPortfoliosValue]);
 
   // Live ceny
-  const { data: livePrices } = api.portfolio.getPrices.useQuery(
+  const { data: livePrices } = api.prices.getPrices.useQuery(
     { symbols: allSymbols },
     { enabled: allSymbols.length > 0, refetchInterval: 60000 }
   );

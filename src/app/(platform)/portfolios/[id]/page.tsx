@@ -82,7 +82,7 @@ export default function PortfolioDetailPage() {
 
   // 2. Stáhneme živé ceny z Yahoo Finance API
   const { data: livePrices, isLoading: isPricesLoading } =
-    api.portfolio.getPrices.useQuery(
+    api.prices.getPrices.useQuery(
       { symbols: holdings.map((h) => h.symbol) },
       { enabled: holdings.length > 0, refetchInterval: 60000 },
     );
@@ -102,7 +102,7 @@ export default function PortfolioDetailPage() {
     );
 
   // 3. Stáhneme živé měnové kurzy
-  const { data: exchangeRates } = api.portfolio.getExchangeRates.useQuery(
+  const { data: exchangeRates } = api.prices.getExchangeRates.useQuery(
     undefined,
     {
       staleTime: 1000 * 60 * 60, // Stačí obnovovat jednou za hodinu
