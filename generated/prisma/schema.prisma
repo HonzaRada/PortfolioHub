@@ -77,8 +77,8 @@ model Transaction {
   id           String          @id @default(cuid())
   type         TransactionType
   assetSymbol  String
-  quantity     Float
-  pricePerUnit Float
+  quantity     Decimal
+  pricePerUnit Decimal
   currency     String?         @default("USD")
   date         DateTime
   createdAt    DateTime        @default(now())

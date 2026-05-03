@@ -36,7 +36,7 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({
     };
   }, [livePrice, currency, displayCurrency, exchangeRates, quantity]);
 
-  const displayQuantity = Number.isInteger(quantity) ? quantity : parseFloat(quantity.toFixed(6));
+  const displayQuantity = Number.isInteger(Number(quantity)) ? Number(quantity) : parseFloat(Number(quantity).toFixed(6));
 
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">

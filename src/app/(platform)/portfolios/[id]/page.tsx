@@ -66,8 +66,8 @@ export default function PortfolioDetailPage() {
           currency: tx.currency || "USD",
         };
       }
-      if (tx.type === "BUY") balances[tx.assetSymbol]!.quantity += tx.quantity;
-      else balances[tx.assetSymbol]!.quantity -= tx.quantity;
+      if (tx.type === "BUY") balances[tx.assetSymbol]!.quantity += Number(tx.quantity);
+      else balances[tx.assetSymbol]!.quantity -= Number(tx.quantity);
     });
 
     return Object.entries(balances)
@@ -629,16 +629,16 @@ export default function PortfolioDetailPage() {
                     {t.assetSymbol}
                   </td>
                   <td className="px-6 py-4 text-right font-mono text-slate-900">
-                    {t.quantity}
+                    {Number(t.quantity)}
                   </td>
                   <td className="px-6 py-4 text-right font-mono">
-                    {t.pricePerUnit.toLocaleString("cs-CZ")}
+                    {Number(t.pricePerUnit).toLocaleString("cs-CZ")}
                     <span className="ml-1 text-xs text-slate-400">
                       {t.currency || "USD"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">
-                    {(t.quantity * t.pricePerUnit).toLocaleString("cs-CZ")}
+                    {(Number(t.quantity) * Number(t.pricePerUnit)).toLocaleString("cs-CZ")}
                     <span className="ml-1 text-xs text-slate-400">
                       {t.currency || "USD"}
                     </span>
@@ -652,8 +652,8 @@ export default function PortfolioDetailPage() {
                             date: t.date,
                             type: t.type as "BUY" | "SELL",
                             assetSymbol: t.assetSymbol,
-                            quantity: t.quantity,
-                            pricePerUnit: t.pricePerUnit,
+                            quantity: Number(t.quantity),
+                            pricePerUnit: Number(t.pricePerUnit),
                             currency: t.currency,
                           });
                           setIsCreateModalOpen(true);

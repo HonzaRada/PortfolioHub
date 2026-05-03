@@ -260,8 +260,8 @@ export const transactionRouter = createTRPCRouter({
           date: tx.date.toISOString().split("T")[0], // ISO string (YYYY-MM-DD)
           type: tx.type,
           assetSymbol: tx.assetSymbol,
-          quantity: tx.quantity,
-          pricePerUnit: tx.pricePerUnit,
+          quantity: tx.quantity.toNumber(),
+          pricePerUnit: tx.pricePerUnit.toNumber(),
           currency: tx.currency,
         });
       });

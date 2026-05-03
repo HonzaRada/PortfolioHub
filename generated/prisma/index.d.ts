@@ -6932,21 +6932,21 @@ export namespace Prisma {
   }
 
   export type TransactionAvgAggregateOutputType = {
-    quantity: number | null
-    pricePerUnit: number | null
+    quantity: Decimal | null
+    pricePerUnit: Decimal | null
   }
 
   export type TransactionSumAggregateOutputType = {
-    quantity: number | null
-    pricePerUnit: number | null
+    quantity: Decimal | null
+    pricePerUnit: Decimal | null
   }
 
   export type TransactionMinAggregateOutputType = {
     id: string | null
     type: $Enums.TransactionType | null
     assetSymbol: string | null
-    quantity: number | null
-    pricePerUnit: number | null
+    quantity: Decimal | null
+    pricePerUnit: Decimal | null
     currency: string | null
     date: Date | null
     createdAt: Date | null
@@ -6958,8 +6958,8 @@ export namespace Prisma {
     id: string | null
     type: $Enums.TransactionType | null
     assetSymbol: string | null
-    quantity: number | null
-    pricePerUnit: number | null
+    quantity: Decimal | null
+    pricePerUnit: Decimal | null
     currency: string | null
     date: Date | null
     createdAt: Date | null
@@ -7122,8 +7122,8 @@ export namespace Prisma {
     id: string
     type: $Enums.TransactionType
     assetSymbol: string
-    quantity: number
-    pricePerUnit: number
+    quantity: Decimal
+    pricePerUnit: Decimal
     currency: string | null
     date: Date
     createdAt: Date
@@ -7225,8 +7225,8 @@ export namespace Prisma {
       id: string
       type: $Enums.TransactionType
       assetSymbol: string
-      quantity: number
-      pricePerUnit: number
+      quantity: Prisma.Decimal
+      pricePerUnit: Prisma.Decimal
       currency: string | null
       date: Date
       createdAt: Date
@@ -7659,8 +7659,8 @@ export namespace Prisma {
     readonly id: FieldRef<"Transaction", 'String'>
     readonly type: FieldRef<"Transaction", 'TransactionType'>
     readonly assetSymbol: FieldRef<"Transaction", 'String'>
-    readonly quantity: FieldRef<"Transaction", 'Float'>
-    readonly pricePerUnit: FieldRef<"Transaction", 'Float'>
+    readonly quantity: FieldRef<"Transaction", 'Decimal'>
+    readonly pricePerUnit: FieldRef<"Transaction", 'Decimal'>
     readonly currency: FieldRef<"Transaction", 'String'>
     readonly date: FieldRef<"Transaction", 'DateTime'>
     readonly createdAt: FieldRef<"Transaction", 'DateTime'>
@@ -8258,16 +8258,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Float'
+   * Reference to a field of type 'Decimal'
    */
-  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+  export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
     
 
 
   /**
-   * Reference to a field of type 'Float[]'
+   * Reference to a field of type 'Decimal[]'
    */
-  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+  export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
     
 
 
@@ -8647,8 +8647,8 @@ export namespace Prisma {
     id?: StringFilter<"Transaction"> | string
     type?: EnumTransactionTypeFilter<"Transaction"> | $Enums.TransactionType
     assetSymbol?: StringFilter<"Transaction"> | string
-    quantity?: FloatFilter<"Transaction"> | number
-    pricePerUnit?: FloatFilter<"Transaction"> | number
+    quantity?: DecimalFilter<"Transaction"> | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFilter<"Transaction"> | Decimal | DecimalJsLike | number | string
     currency?: StringNullableFilter<"Transaction"> | string | null
     date?: DateTimeFilter<"Transaction"> | Date | string
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
@@ -8678,8 +8678,8 @@ export namespace Prisma {
     NOT?: TransactionWhereInput | TransactionWhereInput[]
     type?: EnumTransactionTypeFilter<"Transaction"> | $Enums.TransactionType
     assetSymbol?: StringFilter<"Transaction"> | string
-    quantity?: FloatFilter<"Transaction"> | number
-    pricePerUnit?: FloatFilter<"Transaction"> | number
+    quantity?: DecimalFilter<"Transaction"> | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFilter<"Transaction"> | Decimal | DecimalJsLike | number | string
     currency?: StringNullableFilter<"Transaction"> | string | null
     date?: DateTimeFilter<"Transaction"> | Date | string
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
@@ -8713,8 +8713,8 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Transaction"> | string
     type?: EnumTransactionTypeWithAggregatesFilter<"Transaction"> | $Enums.TransactionType
     assetSymbol?: StringWithAggregatesFilter<"Transaction"> | string
-    quantity?: FloatWithAggregatesFilter<"Transaction"> | number
-    pricePerUnit?: FloatWithAggregatesFilter<"Transaction"> | number
+    quantity?: DecimalWithAggregatesFilter<"Transaction"> | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalWithAggregatesFilter<"Transaction"> | Decimal | DecimalJsLike | number | string
     currency?: StringNullableWithAggregatesFilter<"Transaction"> | string | null
     date?: DateTimeWithAggregatesFilter<"Transaction"> | Date | string
     createdAt?: DateTimeWithAggregatesFilter<"Transaction"> | Date | string
@@ -9117,8 +9117,8 @@ export namespace Prisma {
     id?: string
     type: $Enums.TransactionType
     assetSymbol: string
-    quantity: number
-    pricePerUnit: number
+    quantity: Decimal | DecimalJsLike | number | string
+    pricePerUnit: Decimal | DecimalJsLike | number | string
     currency?: string | null
     date: Date | string
     createdAt?: Date | string
@@ -9130,8 +9130,8 @@ export namespace Prisma {
     id?: string
     type: $Enums.TransactionType
     assetSymbol: string
-    quantity: number
-    pricePerUnit: number
+    quantity: Decimal | DecimalJsLike | number | string
+    pricePerUnit: Decimal | DecimalJsLike | number | string
     currency?: string | null
     date: Date | string
     createdAt?: Date | string
@@ -9143,8 +9143,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
     assetSymbol?: StringFieldUpdateOperationsInput | string
-    quantity?: FloatFieldUpdateOperationsInput | number
-    pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9156,8 +9156,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
     assetSymbol?: StringFieldUpdateOperationsInput | string
-    quantity?: FloatFieldUpdateOperationsInput | number
-    pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9169,8 +9169,8 @@ export namespace Prisma {
     id?: string
     type: $Enums.TransactionType
     assetSymbol: string
-    quantity: number
-    pricePerUnit: number
+    quantity: Decimal | DecimalJsLike | number | string
+    pricePerUnit: Decimal | DecimalJsLike | number | string
     currency?: string | null
     date: Date | string
     createdAt?: Date | string
@@ -9182,8 +9182,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
     assetSymbol?: StringFieldUpdateOperationsInput | string
-    quantity?: FloatFieldUpdateOperationsInput | number
-    pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9194,8 +9194,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
     assetSymbol?: StringFieldUpdateOperationsInput | string
-    quantity?: FloatFieldUpdateOperationsInput | number
-    pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9556,15 +9556,15 @@ export namespace Prisma {
     not?: NestedEnumTransactionTypeFilter<$PrismaModel> | $Enums.TransactionType
   }
 
-  export type FloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
+  export type DecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
   export type PortfolioScalarRelationFilter = {
@@ -9631,20 +9631,20 @@ export namespace Prisma {
     _max?: NestedEnumTransactionTypeFilter<$PrismaModel>
   }
 
-  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+  export type DecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
     _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedFloatFilter<$PrismaModel>
-    _min?: NestedFloatFilter<$PrismaModel>
-    _max?: NestedFloatFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
   }
 
   export type AccountCreateNestedManyWithoutUserInput = {
@@ -9887,12 +9887,12 @@ export namespace Prisma {
     set?: $Enums.TransactionType
   }
 
-  export type FloatFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
+  export type DecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type PortfolioUpdateOneRequiredWithoutTransactionsNestedInput = {
@@ -10057,15 +10057,15 @@ export namespace Prisma {
     not?: NestedEnumTransactionTypeFilter<$PrismaModel> | $Enums.TransactionType
   }
 
-  export type NestedFloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
+  export type NestedDecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
   export type NestedEnumTransactionTypeWithAggregatesFilter<$PrismaModel = never> = {
@@ -10078,20 +10078,20 @@ export namespace Prisma {
     _max?: NestedEnumTransactionTypeFilter<$PrismaModel>
   }
 
-  export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
     _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedFloatFilter<$PrismaModel>
-    _min?: NestedFloatFilter<$PrismaModel>
-    _max?: NestedFloatFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
   }
 
   export type AccountCreateWithoutUserInput = {
@@ -10443,8 +10443,8 @@ export namespace Prisma {
     id?: string
     type: $Enums.TransactionType
     assetSymbol: string
-    quantity: number
-    pricePerUnit: number
+    quantity: Decimal | DecimalJsLike | number | string
+    pricePerUnit: Decimal | DecimalJsLike | number | string
     currency?: string | null
     date: Date | string
     createdAt?: Date | string
@@ -10455,8 +10455,8 @@ export namespace Prisma {
     id?: string
     type: $Enums.TransactionType
     assetSymbol: string
-    quantity: number
-    pricePerUnit: number
+    quantity: Decimal | DecimalJsLike | number | string
+    pricePerUnit: Decimal | DecimalJsLike | number | string
     currency?: string | null
     date: Date | string
     createdAt?: Date | string
@@ -10531,8 +10531,8 @@ export namespace Prisma {
     id?: StringFilter<"Transaction"> | string
     type?: EnumTransactionTypeFilter<"Transaction"> | $Enums.TransactionType
     assetSymbol?: StringFilter<"Transaction"> | string
-    quantity?: FloatFilter<"Transaction"> | number
-    pricePerUnit?: FloatFilter<"Transaction"> | number
+    quantity?: DecimalFilter<"Transaction"> | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFilter<"Transaction"> | Decimal | DecimalJsLike | number | string
     currency?: StringNullableFilter<"Transaction"> | string | null
     date?: DateTimeFilter<"Transaction"> | Date | string
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
@@ -10722,8 +10722,8 @@ export namespace Prisma {
     id?: string
     type: $Enums.TransactionType
     assetSymbol: string
-    quantity: number
-    pricePerUnit: number
+    quantity: Decimal | DecimalJsLike | number | string
+    pricePerUnit: Decimal | DecimalJsLike | number | string
     currency?: string | null
     date: Date | string
     createdAt?: Date | string
@@ -10734,8 +10734,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
     assetSymbol?: StringFieldUpdateOperationsInput | string
-    quantity?: FloatFieldUpdateOperationsInput | number
-    pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10746,8 +10746,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
     assetSymbol?: StringFieldUpdateOperationsInput | string
-    quantity?: FloatFieldUpdateOperationsInput | number
-    pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10758,8 +10758,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
     assetSymbol?: StringFieldUpdateOperationsInput | string
-    quantity?: FloatFieldUpdateOperationsInput | number
-    pricePerUnit?: FloatFieldUpdateOperationsInput | number
+    quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    pricePerUnit?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: NullableStringFieldUpdateOperationsInput | string | null
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

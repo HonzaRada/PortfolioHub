@@ -127,12 +127,12 @@ export const portfolioRouter = createTRPCRouter({
           };
 
           if (transaction.type === "BUY") {
-            existing.quantity += transaction.quantity;
-            existing.totalBuyQuantity += transaction.quantity;
-            existing.totalBuyCost += transaction.quantity * transaction.pricePerUnit;
+            existing.quantity += transaction.quantity.toNumber();
+            existing.totalBuyQuantity += transaction.quantity.toNumber();
+            existing.totalBuyCost += transaction.quantity.toNumber() * transaction.pricePerUnit.toNumber();
           } else if (transaction.type === "SELL") {
-            existing.quantity -= transaction.quantity;
-            existing.totalSellCost += transaction.quantity * transaction.pricePerUnit;
+            existing.quantity -= transaction.quantity.toNumber();
+            existing.totalSellCost += transaction.quantity.toNumber() * transaction.pricePerUnit.toNumber();
           }
 
           holdingsMap.set(transaction.assetSymbol, existing);
@@ -260,9 +260,9 @@ export const portfolioRouter = createTRPCRouter({
                 const existing = holdingsMap.get(transaction.assetSymbol) || { quantity: 0 };
 
                 if (transaction.type === "BUY") {
-                  existing.quantity += transaction.quantity;
+                  existing.quantity += transaction.quantity.toNumber();
                 } else if (transaction.type === "SELL") {
-                  existing.quantity -= transaction.quantity;
+                  existing.quantity -= transaction.quantity.toNumber();
                 }
 
                 holdingsMap.set(transaction.assetSymbol, existing);
@@ -336,7 +336,7 @@ export const portfolioRouter = createTRPCRouter({
         // Projdi všechny transakce portfolia
         portfolio.transactions.forEach((transaction) => {
           const txCurrency = transaction.currency || "USD";
-          const valueInUsd = (transaction.quantity * transaction.pricePerUnit) / (rates[txCurrency] || 1);
+          const valueInUsd = (transaction.quantity.toNumber() * transaction.pricePerUnit.toNumber()) / (rates[txCurrency] || 1);
 
           if (transaction.type === "BUY") {
             totalInvested += valueInUsd;
@@ -386,9 +386,9 @@ export const portfolioRouter = createTRPCRouter({
           };
 
           if (transaction.type === "BUY") {
-            existing.quantity += transaction.quantity;
+            existing.quantity += transaction.quantity.toNumber();
           } else if (transaction.type === "SELL") {
-            existing.quantity -= transaction.quantity;
+            existing.quantity -= transaction.quantity.toNumber();
           }
 
           holdingsMap.set(transaction.assetSymbol, existing);
@@ -511,9 +511,9 @@ export const portfolioRouter = createTRPCRouter({
             };
 
             if (transaction.type === "BUY") {
-              existing.quantity += transaction.quantity;
+              existing.quantity += transaction.quantity.toNumber();
             } else if (transaction.type === "SELL") {
-              existing.quantity -= transaction.quantity;
+              existing.quantity -= transaction.quantity.toNumber();
             }
 
             holdingsMap.set(transaction.assetSymbol, existing);
