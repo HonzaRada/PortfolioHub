@@ -15,7 +15,7 @@ export function GuestView() {
                             P
                         </div>
                         <span className="text-xl font-bold tracking-tight text-slate-900">
-                            Portfolio
+                            PortfolioHub
                         </span>
                     </div>
                     <button
