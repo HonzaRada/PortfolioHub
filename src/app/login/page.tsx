@@ -67,7 +67,7 @@ export default function LoginPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-lg">
             P
           </div>
-          <span className="text-2xl font-bold text-slate-900">PortfolioApp</span>
+          <span className="text-2xl font-bold text-slate-900">PortfolioHub</span>
         </Link>
 
         {/* Chybová hláška z URL */}
