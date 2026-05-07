@@ -46,7 +46,7 @@ export default function PortfolioDetailPage() {
   // --- GLOBÁLNÍ STAV PRO MĚNU Z ZUSTAND ---
   const { displayCurrency, setDisplayCurrency } = useCurrencyStore();
   const [historyRange, setHistoryRange] = useState<
-    "5D" | "1M" | "3M" | "6M" | "1Y" | "2Y" | "ALL"
+    "5D" | "1M" | "3M" | "6M" | "1Y" | "2Y" | "YTD"
   >("1Y");
 
   const { data: portfolio, isLoading: isPortfolioLoading } =
@@ -195,17 +195,19 @@ export default function PortfolioDetailPage() {
   // Filtrování dat podle vybraného rozsahu
   const filteredChartData = useMemo(() => {
     if (!chartData.length) return [];
-    if (historyRange === "ALL") return chartData;
+    if (historyRange === "YTD") {
+      const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+      return chartData.filter((d) => new Date(d.date) >= startOfYear);
+    }
 
-    const days = { "5D": 5 }[historyRange];
+    const days = ({ "5D": 5 } as Record<string, number>)[historyRange];
     if (days !== undefined) {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - days);
       return chartData.filter((d) => new Date(d.date) >= cutoff);
     }
 
-    const months =
-      { "1M": 1, "3M": 3, "6M": 6, "1Y": 12, "2Y": 24 }[historyRange] ?? 12;
+    const months = ({ "1M": 1, "3M": 3, "6M": 6, "1Y": 12, "2Y": 24 } as Record<string, number>)[historyRange] ?? 12;
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - months);
     return chartData.filter((d) => new Date(d.date) >= cutoff);
@@ -463,13 +465,11 @@ export default function PortfolioDetailPage() {
                   ))}
                 </Pie>
                 <RechartsTooltip
-                  formatter={(value: number) =>
-                    value.toLocaleString("cs-CZ", {
-                      maximumFractionDigits: 0,
-                    }) +
-                    " " +
-                    displayCurrency
-                  }
+                  formatter={(value) => {
+                    const num = Number(value);
+                    if (isNaN(num)) return "";
+                    return num.toLocaleString("cs-CZ", { maximumFractionDigits: 0 }) + " " + displayCurrency;
+                  }}
                 />
                 <Legend />
               </PieChart>
@@ -486,7 +486,7 @@ export default function PortfolioDetailPage() {
           </h2>
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex justify-center gap-2">
-              {["5D", "1M", "3M", "6M", "1Y", "2Y", "ALL"].map((range) => (
+              {["5D", "1M", "3M", "6M", "1Y", "2Y", "YTD"].map((range) => (
                 <button
                   key={range}
                   onClick={() => setHistoryRange(range as any)}
@@ -519,7 +519,7 @@ export default function PortfolioDetailPage() {
                           .filter((d, i) => {
                             if (i === 0) return true;
                             const prev = new Date(
-                              filteredChartData[i - 1].date,
+                              filteredChartData[i - 1]!.date,
                             );
                             const curr = new Date(d.date);
                             const prevWeek = Math.floor(prev.getDate() / 7);
@@ -531,7 +531,7 @@ export default function PortfolioDetailPage() {
                       return filteredChartData
                         .filter((d, i) => {
                           if (i === 0) return true;
-                          const prev = new Date(filteredChartData[i - 1].date);
+                          const prev = new Date(filteredChartData[i - 1]!.date);
                           const curr = new Date(d.date);
                           return (
                             curr.getMonth() !== prev.getMonth() ||
@@ -566,13 +566,11 @@ export default function PortfolioDetailPage() {
                     }}
                   />
                   <RechartsTooltip
-                    formatter={(value: number) =>
-                      value.toLocaleString("cs-CZ", {
-                        maximumFractionDigits: 0,
-                      }) +
-                      " " +
-                      displayCurrency
-                    }
+                    formatter={(value) => {
+                      const num = Number(value);
+                      if (isNaN(num)) return "";
+                      return num.toLocaleString("cs-CZ", { maximumFractionDigits: 0 }) + " " + displayCurrency;
+                    }}
                     labelFormatter={(label) =>
                       new Date(label).toLocaleDateString("cs-CZ")
                     }
