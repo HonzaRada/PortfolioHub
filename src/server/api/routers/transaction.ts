@@ -36,6 +36,7 @@ export const transactionRouter = createTRPCRouter({
         type: z.enum(["BUY", "SELL"]),
         quantity: z.number().positive(),
         pricePerUnit: z.number().positive(),
+        currency: z.string().optional(),
         date: z.date(),
       }),
     )
@@ -75,6 +76,7 @@ export const transactionRouter = createTRPCRouter({
           type: input.type,
           quantity: input.quantity,
           pricePerUnit: input.pricePerUnit,
+          currency: input.currency,
           date: input.date,
         },
       });
@@ -257,7 +259,7 @@ export const transactionRouter = createTRPCRouter({
       portfolio.transactions.forEach((tx) => {
         transactions.push({
           portfolioName: portfolio.name,
-          date: tx.date.toISOString().split("T")[0], // ISO string (YYYY-MM-DD)
+          date: tx.date.toISOString().split("T")[0] ?? "", // ISO string (YYYY-MM-DD)
           type: tx.type,
           assetSymbol: tx.assetSymbol,
           quantity: tx.quantity.toNumber(),
