@@ -277,7 +277,7 @@ export default function PortfolioDetailPage() {
             const assetClass = String(row["AssetClass"] || "")
               .trim()
               .toUpperCase();
-            if (assetClass !== "STK") continue;
+            if (assetClass !== "STK" && assetClass !== "CRYPTO") continue;
 
             const assetSymbol = String(row["Symbol"] || "").trim();
             const listingExchange = String(row["ListingExchange"] || "").trim();
