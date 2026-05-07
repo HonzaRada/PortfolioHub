@@ -10,7 +10,7 @@ export const transactionRouter = createTRPCRouter({
     .input(z.object({ portfolioId: z.string() }))
     .query(async ({ ctx, input }) => {
       // BEZPEČNOST: Zkontrolujeme, jestli portfolio existuje a patří přihlášenému uživateli
-      const portfolio = await ctx.db.portfolio.findUnique({
+      const portfolio = await ctx.db.portfolio.findFirst({
         where: { id: input.portfolioId, userId: ctx.session.user.id },
       });
 
@@ -41,7 +41,7 @@ export const transactionRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       // BEZPEČNOST: Kontrola majitele portfolia před přidáním
-      const portfolio = await ctx.db.portfolio.findUnique({
+      const portfolio = await ctx.db.portfolio.findFirst({
         where: { id: input.portfolioId, userId: ctx.session.user.id },
       });
 
@@ -99,7 +99,7 @@ export const transactionRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const portfolio = await ctx.db.portfolio.findUnique({
+      const portfolio = await ctx.db.portfolio.findFirst({
         where: { id: input.portfolioId, userId: ctx.session.user.id },
       });
       if (!portfolio) throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -153,7 +153,7 @@ export const transactionRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       // BEZPEČNOST: Najdeme transakci i s jejím portfoliem, abychom ověřili majitele
-      const transaction = await ctx.db.transaction.findUnique({
+      const transaction = await ctx.db.transaction.findFirst({
         where: { id: input.id },
         include: { portfolio: true },
       });
@@ -184,7 +184,7 @@ export const transactionRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       // BEZPEČNOST: Stejná kontrola jako u mazání
-      const transaction = await ctx.db.transaction.findUnique({
+      const transaction = await ctx.db.transaction.findFirst({
         where: { id: input.id },
         include: { portfolio: true },
       });

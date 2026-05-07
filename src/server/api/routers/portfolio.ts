@@ -24,7 +24,7 @@ export const portfolioRouter = createTRPCRouter({
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const portfolio = await ctx.db.portfolio.findUnique({
+      const portfolio = await ctx.db.portfolio.findFirst({
         where: {
           id: input.id,
           userId: ctx.session.user.id, // Opět kontrola bezpečnosti
@@ -85,7 +85,7 @@ export const portfolioRouter = createTRPCRouter({
       .input(z.object({ portfolioId: z.string() }))
       .query(async ({ ctx, input }) => {
         // Ověří že portfolio existuje a patří uživateli
-        const portfolio = await ctx.db.portfolio.findUnique({
+        const portfolio = await ctx.db.portfolio.findFirst({
           where: {
             id: input.portfolioId,
             userId: ctx.session.user.id,
@@ -158,7 +158,7 @@ export const portfolioRouter = createTRPCRouter({
         .input(z.object({ portfolioId: z.string() }))
         .query(async ({ ctx, input }) => {
           // Ověří že portfolio existuje a patří uživateli
-          const portfolio = await ctx.db.portfolio.findUnique({
+          const portfolio = await ctx.db.portfolio.findFirst({
             where: {
               id: input.portfolioId,
               userId: ctx.session.user.id,
