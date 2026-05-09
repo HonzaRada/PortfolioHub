@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "~/lib/auth-client";
 import { useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginContent() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,8 +61,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-
-        {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-3 mb-8">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white font-bold text-lg">
             P
@@ -70,7 +68,6 @@ export default function LoginPage() {
           <span className="text-2xl font-bold text-slate-900">PortfolioHub</span>
         </Link>
 
-        {/* Chybová hláška z URL */}
         {urlError === "OAuthAccountNotLinked" && (
           <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
             <p className="font-semibold mb-1">Účet již existuje</p>
@@ -78,7 +75,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Karta */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
           <h1 className="text-2xl font-bold text-slate-900 text-center mb-2">
             {isRegister ? "Vytvořit účet" : "Přihlásit se"}
@@ -87,7 +83,6 @@ export default function LoginPage() {
             Vyber způsob přihlášení
           </p>
 
-          {/* OAuth tlačítka */}
           <div className="flex flex-col gap-3 mb-6">
             <button
               onClick={() => handleOAuth("google")}
@@ -115,14 +110,12 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Oddělovač */}
           <div className="flex items-center gap-3 mb-6">
             <div className="flex-1 h-px bg-slate-200"></div>
             <span className="text-xs text-slate-400">nebo</span>
             <div className="flex-1 h-px bg-slate-200"></div>
           </div>
 
-          {/* Email/heslo formulář */}
           <form onSubmit={handleEmailSubmit} className="flex flex-col gap-3">
             {isRegister && (
               <input
@@ -164,7 +157,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Přepínač registrace/přihlášení */}
           <p className="text-center text-sm text-slate-500 mt-4">
             {isRegister ? "Už máš účet?" : "Nemáš účet?"}{" "}
             <button
@@ -181,5 +173,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }
