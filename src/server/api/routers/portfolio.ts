@@ -185,7 +185,7 @@ export const portfolioRouter = createTRPCRouter({
           }
 
           // Zjisti datum první transakce
-          const firstDate = new Date(transactions[0].date);
+          const firstDate = new Date(transactions[0]!.date);
           firstDate.setHours(0, 0, 0, 0);
 
           const today = new Date();
@@ -225,10 +225,10 @@ export const portfolioRouter = createTRPCRouter({
                   priceHistory[symbol] = {};
                   timestamps.forEach((timestamp: number, index: number) => {
                     const date = new Date(timestamp * 1000);
-                    const dateStr = date.toISOString().split("T")[0];
+                    const dateStr = date.toISOString().split("T")[0] ?? "";
                     const closePrice = closePrices[index];
                     if (closePrice) {
-                      priceHistory[symbol][dateStr] = isGBp ? closePrice / 100 : closePrice;
+                      priceHistory[symbol]![dateStr] = isGBp ? closePrice / 100 : closePrice;
                     }
                   });
                 }
@@ -280,15 +280,15 @@ export const portfolioRouter = createTRPCRouter({
               let closePrice: number | null = null;
 
               // Nejprve zkus přesnou shodu
-              if (priceHistory[symbol]?.[dateStr]) {
-                closePrice = priceHistory[symbol][dateStr];
+              if (priceHistory[symbol]?.[dateStr ?? ""]) {
+                closePrice = priceHistory[symbol][dateStr ?? ""] ?? null;
               } else {
                 // Jinak hledej nejbližší předchozí datum
                 let searchDate = new Date(date);
                 for (let i = 0; i < 30; i++) {
                   // Hledej zpětně až 30 dní
                   searchDate.setDate(searchDate.getDate() - 1);
-                  const searchDateStr = searchDate.toISOString().split("T")[0];
+                  const searchDateStr = searchDate.toISOString().split("T")[0] ?? "";
                   if (priceHistory[symbol]?.[searchDateStr]) {
                     closePrice = priceHistory[symbol][searchDateStr];
                     break;
@@ -305,7 +305,7 @@ export const portfolioRouter = createTRPCRouter({
             // Vynechej dny kde nemáme ceny pro žádný symbol
             if (hasAnyPrice) {
               history.push({
-                date: dateStr,
+                date: dateStr ?? "",
                 value: dayValue,
               });
             }
@@ -432,7 +432,7 @@ export const portfolioRouter = createTRPCRouter({
       }
 
       // Zjisti datum první transakce
-      const firstDate = new Date(allTransactions[0].date);
+      const firstDate = new Date(allTransactions[0]!.date);
       firstDate.setHours(0, 0, 0, 0);
 
       const today = new Date();
@@ -477,7 +477,7 @@ export const portfolioRouter = createTRPCRouter({
                 const dateStr = date.toISOString().split("T")[0];
                 const closePrice = closePrices[index];
                 if (closePrice) {
-                  priceHistory[symbol][dateStr] = isGBp ? closePrice / 100 : closePrice;
+                  priceHistory[symbol]![dateStr ?? ""] = isGBp ? closePrice / 100 : closePrice;
                 }
               });
             }
@@ -531,8 +531,8 @@ export const portfolioRouter = createTRPCRouter({
           let closePrice: number | null = null;
 
           // Nejprve zkus přesnou shodu
-          if (priceHistory[symbol]?.[dateStr]) {
-            closePrice = priceHistory[symbol][dateStr];
+          if (priceHistory[symbol]?.[dateStr ?? ""]) {
+            closePrice = priceHistory[symbol][dateStr ?? ""] ?? null;
           } else {
             // Jinak hledej nejbližší předchozí datum
             let searchDate = new Date(date);
@@ -540,8 +540,8 @@ export const portfolioRouter = createTRPCRouter({
               // Hledej zpětně až 30 dní
               searchDate.setDate(searchDate.getDate() - 1);
               const searchDateStr = searchDate.toISOString().split("T")[0];
-              if (priceHistory[symbol]?.[searchDateStr]) {
-                closePrice = priceHistory[symbol][searchDateStr];
+              if (priceHistory[symbol]?.[searchDateStr ?? ""]) {
+                closePrice = priceHistory[symbol][searchDateStr ?? ""] ?? null;
                 break;
               }
             }
@@ -556,7 +556,7 @@ export const portfolioRouter = createTRPCRouter({
         // Vynechej dny kde nemáme ceny pro žádný symbol
         if (hasAnyPrice) {
           history.push({
-            date: dateStr,
+            date: dateStr ?? "",
             value: dayValue,
           });
         }

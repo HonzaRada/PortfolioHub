@@ -180,12 +180,11 @@ export default function DashboardPage() {
                     }}
                   />
                   <RechartsTooltip
-                    formatter={(value: number) =>
-                      value.toLocaleString("cs-CZ", { maximumFractionDigits: 0 }) + " " + displayCurrency
-                    }
-                    labelFormatter={(label) =>
-                      new Date(label).toLocaleDateString("cs-CZ")
-                    }
+                    formatter={(value) => {
+                      const num = Number(value);
+                      if (isNaN(num)) return "";
+                      return num.toLocaleString("cs-CZ", { maximumFractionDigits: 0 }) + " " + displayCurrency;
+                    }}
                   />
                   <Line
                     type="monotone"
@@ -223,8 +222,9 @@ export default function DashboardPage() {
                 </Pie>
                 <Legend />
                 <RechartsTooltip
-                  formatter={(value: number | string | undefined) => {
-                    if (typeof value !== "number") return "";
+                  formatter={(value) => {
+                    const num = Number(value);
+                    if (isNaN(num)) return "";
                     const investedSum = portfoliosStats.reduce((sum, p) => {
                       const portfolioCurrency = p.currency || "USD";
                       const rateFromPortfolioCurrency = exchangeRates?.[portfolioCurrency] || 1;
@@ -232,9 +232,9 @@ export default function DashboardPage() {
                       const convertedValue = (p.totalInvested / rateFromPortfolioCurrency) * rateToDisplayCurrency;
                       return sum + convertedValue;
                     }, 0);
-                    const percentage = ((value / investedSum) * 100).toFixed(1);
+                    const percentage = ((num / investedSum) * 100).toFixed(1);
                     return [
-                      `${value.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })} ${displayCurrency}`,
+                      `${num.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })} ${displayCurrency}`,
                       `(${percentage}%)`,
                     ];
                   }}

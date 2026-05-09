@@ -63,7 +63,7 @@ export function CreateTransactionModal({
                 const currentAmount = acc[tx.assetSymbol] || 0;
                 acc[tx.assetSymbol] =
                     currentAmount +
-                    (tx.type === "BUY" ? tx.quantity : -tx.quantity);
+                    (tx.type === "BUY" ? Number(tx.quantity) : -Number(tx.quantity));
                 return acc;
             },
             {} as Record<string, number>,
