@@ -7,6 +7,7 @@ const createPrismaClient = () =>
       env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 
+// Singleton pattern — zabraňuje vytváření nových Prisma klientů při každém hot-reloadu v dev módu
 const globalForPrisma = globalThis as unknown as {
   prisma: ReturnType<typeof createPrismaClient> | undefined;
 };

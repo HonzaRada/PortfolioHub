@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
-type Currency = 'CZK' | 'USD' | 'EUR' | 'GBP';
+type Currency = "CZK" | "USD" | "EUR" | "GBP";
 
 interface CurrencySelectorProps {
   value: Currency;
@@ -11,10 +11,10 @@ interface CurrencySelectorProps {
 }
 
 const currencies: Array<{ code: Currency; flag: string }> = [
-  { code: 'CZK', flag: '🇨🇿' },
-  { code: 'USD', flag: '🇺🇸' },
-  { code: 'EUR', flag: '🇪🇺' },
-  { code: 'GBP', flag: '🇬🇧' },
+  { code: "CZK", flag: "🇨🇿" },
+  { code: "USD", flag: "🇺🇸" },
+  { code: "EUR", flag: "🇪🇺" },
+  { code: "GBP", flag: "🇬🇧" },
 ];
 
 export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
@@ -25,14 +25,14 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
   return (
     <div className="flex items-center">
       {label && (
-        <label className="text-xs font-medium text-slate-600 mr-2 uppercase tracking-wider">
+        <label className="mr-2 text-xs font-medium tracking-wider text-slate-600 uppercase">
           Zobrazit v:
         </label>
       )}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as Currency)}
-        className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+        className="cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
       >
         {currencies.map(({ code, flag }) => (
           <option key={code} value={code}>

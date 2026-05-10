@@ -43,7 +43,6 @@ export default function PortfolioDetailPage() {
   const utils = api.useUtils();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- GLOBÁLNÍ STAV PRO MĚNU Z ZUSTAND ---
   const { displayCurrency, setDisplayCurrency } = useCurrencyStore();
   const [historyRange, setHistoryRange] = useState<
     "5D" | "1M" | "3M" | "6M" | "1Y" | "2Y" | "YTD"
@@ -54,7 +53,6 @@ export default function PortfolioDetailPage() {
   const { data: transactions, isLoading: isTransactionsLoading } =
     api.transaction.getAll.useQuery({ portfolioId });
 
-  // 1. Zjistíme zůstatky a jejich originální měny
   const holdings = useMemo(() => {
     if (!transactions) return [];
     const balances: Record<string, { quantity: number; currency: string }> = {};
@@ -66,7 +64,8 @@ export default function PortfolioDetailPage() {
           currency: tx.currency || "USD",
         };
       }
-      if (tx.type === "BUY") balances[tx.assetSymbol]!.quantity += Number(tx.quantity);
+      if (tx.type === "BUY")
+        balances[tx.assetSymbol]!.quantity += Number(tx.quantity);
       else balances[tx.assetSymbol]!.quantity -= Number(tx.quantity);
     });
 
@@ -80,36 +79,31 @@ export default function PortfolioDetailPage() {
       .sort((a, b) => b.quantity - a.quantity);
   }, [transactions]);
 
-  // 2. Stáhneme živé ceny z Yahoo Finance API
   const { data: livePrices, isLoading: isPricesLoading } =
     api.prices.getPrices.useQuery(
       { symbols: holdings.map((h) => h.symbol) },
       { enabled: holdings.length > 0, refetchInterval: 60000 },
     );
 
-  // 2.5 NOVÉ: Stáhneme holdings se statistikami
   const { data: holdingsWithStats } =
     api.portfolio.getHoldingsWithStats.useQuery(
       { portfolioId },
       { enabled: !!portfolioId },
     );
 
-  // NOVÉ: Stáhneme historii hodnoty portfolia
   const { data: portfolioHistory, isLoading: isHistoryLoading } =
     api.portfolio.getPortfolioHistory.useQuery(
       { portfolioId },
       { enabled: !!portfolioId },
     );
 
-  // 3. Stáhneme živé měnové kurzy
   const { data: exchangeRates } = api.prices.getExchangeRates.useQuery(
     undefined,
     {
-      staleTime: 1000 * 60 * 60, // Stačí obnovovat jednou za hodinu
+      staleTime: 1000 * 60 * 60, // Kurzy měn se obnovují jednou za hodinu
     },
   );
 
-  // 4. VÝPOČET CELKOVÉ HODNOTY S DYNAMICKÝM PŘEVODEM
   const totalValue = useMemo(() => {
     if (!livePrices || !exchangeRates) return 0;
 
@@ -128,7 +122,6 @@ export default function PortfolioDetailPage() {
     }, 0);
   }, [holdings, livePrices, exchangeRates, displayCurrency]);
 
-  // NOVÝ: Výpočet statistik portfolia (investováno, P&L)
   const portfolioStats = useMemo(() => {
     if (!holdingsWithStats || !exchangeRates) {
       return { totalInvested: 0, totalPnL: 0, totalPnLPercent: 0 };
@@ -159,7 +152,6 @@ export default function PortfolioDetailPage() {
     totalValue,
   ]);
 
-  // NOVÝ: Výpočet dat pro koláčový graf alokace
   const allocationData = useMemo(() => {
     if (!livePrices || !exchangeRates) return [];
 
@@ -182,7 +174,6 @@ export default function PortfolioDetailPage() {
     return data;
   }, [holdings, livePrices, exchangeRates, displayCurrency]);
 
-  // NOVÝ: Výpočet dat pro graf vývoje hodnoty portfolia
   const chartData = useMemo(() => {
     if (!portfolioHistory || !exchangeRates) return [];
 
@@ -207,13 +198,18 @@ export default function PortfolioDetailPage() {
       return chartData.filter((d) => new Date(d.date) >= cutoff);
     }
 
-    const months = ({ "1M": 1, "3M": 3, "6M": 6, "1Y": 12, "2Y": 24 } as Record<string, number>)[historyRange] ?? 12;
+    const months =
+      (
+        { "1M": 1, "3M": 3, "6M": 6, "1Y": 12, "2Y": 24 } as Record<
+          string,
+          number
+        >
+      )[historyRange] ?? 12;
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - months);
     return chartData.filter((d) => new Date(d.date) >= cutoff);
   }, [chartData, historyRange]);
 
-  // --- MUTACE A OSTATNÍ LOGIKA ---
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<TransactionData | null>(null);
@@ -258,7 +254,9 @@ export default function PortfolioDetailPage() {
         const parsedTransactions: any[] = [];
         for (const row of results.data as any[]) {
           try {
-            const rawDate = (String(row["Date/Time"] || "").split(";")[0] ?? "").trim();
+            const rawDate = (
+              String(row["Date/Time"] || "").split(";")[0] ?? ""
+            ).trim();
             if (!rawDate) continue;
 
             let parsedDate = /^\d{8}$/.test(rawDate)
@@ -365,7 +363,10 @@ export default function PortfolioDetailPage() {
                 : "📁 Import CSV"}
             </button>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                setIsCreateModalOpen(true);
+                setEditingTransaction(null);
+              }}
               className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
             >
               + Nová transakce
@@ -374,7 +375,7 @@ export default function PortfolioDetailPage() {
         </div>
       </div>
 
-      {/* --- PŘEPÍNAČ MĚN A STAT KARTY --- */}
+      {/* Statistické karty */}
       <div className="mb-8">
         <div className="mb-4 flex justify-end">
           <CurrencySelector
@@ -418,7 +419,6 @@ export default function PortfolioDetailPage() {
         )}
       </div>
 
-      {/* --- ZŮSTATKY --- */}
       <div className="mb-8">
         <h2 className="mb-4 text-lg font-bold text-slate-900">
           Aktuální složení portfolia
@@ -439,7 +439,6 @@ export default function PortfolioDetailPage() {
         </div>
       </div>
 
-      {/* --- ALOKACE PORTFOLIA (KOLÁČOVÝ GRAF) --- */}
       {allocationData.length > 0 && (
         <div className="mb-8">
           <h2 className="mb-4 text-lg font-bold text-slate-900">
@@ -468,7 +467,13 @@ export default function PortfolioDetailPage() {
                   formatter={(value) => {
                     const num = Number(value);
                     if (isNaN(num)) return "";
-                    return num.toLocaleString("cs-CZ", { maximumFractionDigits: 0 }) + " " + displayCurrency;
+                    return (
+                      num.toLocaleString("cs-CZ", {
+                        maximumFractionDigits: 0,
+                      }) +
+                      " " +
+                      displayCurrency
+                    );
                   }}
                 />
                 <Legend />
@@ -478,7 +483,6 @@ export default function PortfolioDetailPage() {
         </div>
       )}
 
-      {/* --- VÝVOJ HODNOTY PORTFOLIA (LINEÁRNÍ GRAF) --- */}
       {chartData && chartData.length > 1 ? (
         <div className="mb-8">
           <h2 className="mb-4 text-lg font-bold text-slate-900">
@@ -569,7 +573,13 @@ export default function PortfolioDetailPage() {
                     formatter={(value) => {
                       const num = Number(value);
                       if (isNaN(num)) return "";
-                      return num.toLocaleString("cs-CZ", { maximumFractionDigits: 0 }) + " " + displayCurrency;
+                      return (
+                        num.toLocaleString("cs-CZ", {
+                          maximumFractionDigits: 0,
+                        }) +
+                        " " +
+                        displayCurrency
+                      );
                     }}
                     labelFormatter={(label) =>
                       new Date(label).toLocaleDateString("cs-CZ")
@@ -589,7 +599,6 @@ export default function PortfolioDetailPage() {
         </div>
       ) : null}
 
-      {/* Tabulka (Zkráceno pro přehlednost, nech si tam tu svou stávající) */}
       <h2 className="mb-4 text-lg font-bold text-slate-900">
         Historie transakcí
       </h2>
@@ -609,10 +618,7 @@ export default function PortfolioDetailPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {transactions?.map((t) => (
-                <tr
-                  key={t.id}
-                  className="group transition-colors hover:bg-slate-50"
-                >
+                <tr key={t.id} className="transition-colors hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">
                     {t.date.toLocaleDateString("cs-CZ")}
                   </td>
@@ -636,13 +642,15 @@ export default function PortfolioDetailPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">
-                    {(Number(t.quantity) * Number(t.pricePerUnit)).toLocaleString("cs-CZ")}
+                    {(
+                      Number(t.quantity) * Number(t.pricePerUnit)
+                    ).toLocaleString("cs-CZ")}
                     <span className="ml-1 text-xs text-slate-400">
                       {t.currency || "USD"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex justify-end gap-2 transition-opacity">
                       <button
                         onClick={() => {
                           setEditingTransaction({
@@ -677,7 +685,10 @@ export default function PortfolioDetailPage() {
 
       <CreateTransactionModal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setEditingTransaction(null);
+        }}
         initialData={editingTransaction}
         portfolioId={portfolioId}
       />

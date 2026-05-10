@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 
+// Kontext tRPC — obsahuje databázi a session přihlášeného uživatele
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -34,6 +35,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
 export const createCallerFactory = t.createCallerFactory;
 export const createTRPCRouter = t.router;
 
+// Middleware pro měření doby trvání procedur, v dev módu přidává umělé zpoždění
 const timingMiddleware = t.middleware(async ({ next, path }) => {
   const start = Date.now();
 
@@ -49,8 +51,10 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
   return result;
 });
 
+// Veřejná procedura — přístupná bez přihlášení
 export const publicProcedure = t.procedure.use(timingMiddleware);
 
+// Chráněná procedura — vyžaduje přihlášeného uživatele
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {

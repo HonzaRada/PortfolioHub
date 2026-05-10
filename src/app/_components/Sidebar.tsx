@@ -15,6 +15,7 @@ export function Sidebar() {
 
   return (
     <>
+      {/* Poloprůhledný overlay pro zavření sidebaru kliknutím mimo něj na mobilech */}
       {isMobileOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
@@ -22,21 +23,20 @@ export function Sidebar() {
         />
       )}
 
-      <aside className={`
-        fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white flex flex-col
-        transition-transform duration-300
-        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0
-      `}>
-        <div className="flex h-16 items-center px-6 border-b border-slate-100">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold mr-3">
+      <aside
+        className={`fixed top-0 left-0 z-40 flex h-screen w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-300 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+      >
+        <div className="flex h-16 items-center border-b border-slate-100 px-6">
+          <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 font-bold text-white">
             P
           </div>
           <span className="text-xl font-bold text-slate-900">PortfolioHub</span>
         </div>
 
-        <nav className="flex flex-col gap-1 p-4 flex-1">
-          <p className="px-4 text-xs font-semibold text-slate-400 uppercase mb-2">Menu</p>
+        <nav className="flex flex-1 flex-col gap-1 p-4">
+          <p className="mb-2 px-4 text-xs font-semibold text-slate-400 uppercase">
+            Menu
+          </p>
           {links.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -57,7 +57,7 @@ export function Sidebar() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
+        <div className="border-t border-slate-100 p-4">
           <Link
             href="/settings"
             onClick={closeMobile}

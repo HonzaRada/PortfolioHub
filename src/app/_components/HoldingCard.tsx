@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 
 interface HoldingCardProps {
   symbol: string;
@@ -36,7 +36,10 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({
     };
   }, [livePrice, currency, displayCurrency, exchangeRates, quantity]);
 
-  const displayQuantity = Number.isInteger(Number(quantity)) ? Number(quantity) : parseFloat(Number(quantity).toFixed(6));
+  // Kryptoměny mohou mít velmi malé hodnoty, zobrazujeme max 6 desetinných míst
+  const displayQuantity = Number.isInteger(Number(quantity))
+    ? Number(quantity)
+    : parseFloat(Number(quantity).toFixed(6));
 
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
@@ -50,14 +53,21 @@ export const HoldingCard: React.FC<HoldingCardProps> = ({
 
       <div className="mt-3 w-full border-t border-slate-100 pt-3">
         {isLoading ? (
-          <span className="text-xs text-slate-400 animate-pulse">Načítám...</span>
+          <span className="animate-pulse text-xs text-slate-400">
+            Načítám...
+          </span>
         ) : priceInDisplayCurrency ? (
           <div className="flex flex-col">
             <span className="text-xs text-slate-500">
-              Cena: {priceInDisplayCurrency.toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} {displayCurrency}
+              Cena:{" "}
+              {priceInDisplayCurrency.toLocaleString("cs-CZ", {
+                maximumFractionDigits: 1,
+              })}{" "}
+              {displayCurrency}
             </span>
             <span className="mt-1 font-mono text-lg font-bold text-indigo-600">
-              {assetValue.toLocaleString('cs-CZ', { maximumFractionDigits: 0 })} {displayCurrency}
+              {assetValue.toLocaleString("cs-CZ", { maximumFractionDigits: 0 })}{" "}
+              {displayCurrency}
             </span>
           </div>
         ) : (
