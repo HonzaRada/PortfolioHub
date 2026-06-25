@@ -44,3 +44,6 @@ yarn-error.log*
 
 # idea files
 .idea
+
+# PortfolioHub onepager
+/PortfolioHub_onepager.pdf
